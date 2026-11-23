@@ -190,6 +190,35 @@ class IDBDatacenterTaskBase:
             torch.stack(src_quat_list, dim=0),
         )
 
+    def refresh_after_reset(self, env_ids: torch.Tensor) -> None:
+        """Refresh seating geometry and initial bend metric after reset without advancing latch or fault state."""
+        env, cfg = self.env, self.cfg
+        state = env.wire_state
+        if state is None:
+            return
+        self.source_pos_w, self.source_quat_w = self._gather_port_poses(self.source_port_idx)
+        self.target_pos_w, self.target_quat_w = self._gather_port_poses(self.target_port_idx)
+        self.source_seating = evaluate_connector_seating(
+            state.insertion_end_pos,
+            state.insertion_end_quat,
+            self.source_pos_w,
+            self.source_quat_w,
+            env.connector,
+            roll_cos_threshold=cfg.roll_cos_threshold,
+        )
+        self.target_seating = evaluate_connector_seating(
+            state.insertion_end_pos,
+            state.insertion_end_quat,
+            self.target_pos_w,
+            self.target_quat_w,
+            env.connector,
+            roll_cos_threshold=cfg.roll_cos_threshold,
+        )
+        self.seated_any_port[env_ids] = True
+        self.seated_port_idx[env_ids] = self.source_port_idx[env_ids]
+        bend = compute_cable_bend_radius(state.centerline, min_bend_radius=env.cfg.wire.min_bend_radius)
+        self.min_bend_radius_m[env_ids] = bend.min_radius_m[env_ids]
+
     def update(self) -> None:
         env, cfg = self.env, self.cfg
         state = env.wire_state

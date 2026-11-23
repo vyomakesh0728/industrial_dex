@@ -21,8 +21,14 @@ from idb_tasks.direct.idb.single_arm.common.scoring import (
     score_sc_fiber_maintenance,
     score_sc_port_swap,
 )
+from idb_tasks.direct.idb.wire_base.articulation import (
+    compute_chain_arc_joint_state,
+    resolve_bending_dofs,
+    sample_physics_scales,
+)
 from idb_tasks.direct.idb.wire_base.connectors import ConnectorGeometry
-from idb_tasks.direct.idb.wire_base.math_utils import quat_from_angle_axis
+from idb_tasks.direct.idb.wire_base.deformable import map_deformable_nodes_to_arc
+from idb_tasks.direct.idb.wire_base.math_utils import quat_apply, quat_from_angle_axis
 from idb_tasks.direct.idb.wire_base.wire_state import PluggedCableArc, ferrule_positions
 from idb_tasks.sim.spawners.ports.connector_profiles import connector_families
 
@@ -236,3 +242,121 @@ def test_official_idb_rubric_point_totals_and_failure_gates():
         retention_engaged=torch.tensor([True]), no_damage=torch.tensor([False]),
     )
     assert int(r4_dmg.total_score[0]) == 17 and not bool(r4_dmg.passed[0])
+
+
+def _rot_y_z(pitch: torch.Tensor, yaw: torch.Tensor) -> torch.Tensor:
+    """Intrinsic R_y(pitch) @ R_z(yaw) rotation matrix matching D6 rotX=0 joint kinematics."""
+    cp, sp = torch.cos(pitch), torch.sin(pitch)
+    cy, sy = torch.cos(yaw), torch.sin(yaw)
+    r = torch.zeros(*pitch.shape, 3, 3, dtype=pitch.dtype)
+    r[..., 0, 0] = cp * cy
+    r[..., 0, 1] = -cp * sy
+    r[..., 0, 2] = sp
+    r[..., 1, 0] = sy
+    r[..., 1, 1] = cy
+    r[..., 2, 0] = -sp * cy
+    r[..., 2, 1] = sp * sy
+    r[..., 2, 2] = cp
+    return r
+
+
+def _quat_to_rot_matrix(q: torch.Tensor) -> torch.Tensor:
+    w, x, y, z = q.unbind(-1)
+    r = torch.zeros(*q.shape[:-1], 3, 3, dtype=q.dtype)
+    r[..., 0, 0] = 1 - 2 * (y * y + z * z)
+    r[..., 0, 1] = 2 * (x * y - z * w)
+    r[..., 0, 2] = 2 * (x * z + y * w)
+    r[..., 1, 0] = 2 * (x * y + z * w)
+    r[..., 1, 1] = 1 - 2 * (x * x + z * z)
+    r[..., 1, 2] = 2 * (y * z - x * w)
+    r[..., 2, 0] = 2 * (x * z - y * w)
+    r[..., 2, 1] = 2 * (y * z + x * w)
+    r[..., 2, 2] = 1 - 2 * (x * x + y * y)
+    return r
+
+
+@pytest.mark.parametrize("root_idx", [0, 12, 23])
+def test_articulation_chain_fk_matches_plugged_arc_for_any_root_segment(root_idx: int):
+    far_pos = torch.tensor([[0.0, 0.024, 0.151], [0.0, -0.042, 0.151]])
+    act_pos = torch.tensor([[0.0, 0.024, 0.240], [0.0, -0.008, 0.240]])
+    num_segs = 24
+    arc = PluggedCableArc.solve(far_pos, act_pos, cable_length=0.30, num_points=num_segs + 1)
+    root_pos, root_quat, rel_pitch, rel_yaw = compute_chain_arc_joint_state(arc.points, root_seg_index=root_idx)
+
+    seg_lens = (arc.points[:, 1:] - arc.points[:, :-1]).norm(dim=-1)  # (N, S)
+    frames: list[torch.Tensor | None] = [None] * num_segs
+    centers: list[torch.Tensor | None] = [None] * num_segs
+    frames[root_idx] = _quat_to_rot_matrix(root_quat)
+    centers[root_idx] = root_pos
+
+    # Walk forward from root_idx -> num_segs - 1
+    for k in range(root_idx, num_segs - 1):
+        r_rel = _rot_y_z(rel_pitch[:, k], rel_yaw[:, k])
+        frames[k + 1] = torch.bmm(frames[k], r_rel)
+        x_k = frames[k][:, :, 0]
+        x_next = frames[k + 1][:, :, 0]
+        centers[k + 1] = centers[k] + 0.5 * seg_lens[:, k : k + 1] * x_k + 0.5 * seg_lens[:, k + 1 : k + 2] * x_next
+
+    # Walk backward from root_idx -> 0
+    for k in range(root_idx - 1, -1, -1):
+        r_rel = _rot_y_z(rel_pitch[:, k], rel_yaw[:, k])
+        frames[k] = torch.bmm(frames[k + 1], r_rel.transpose(1, 2))
+        x_k = frames[k][:, :, 0]
+        x_next = frames[k + 1][:, :, 0]
+        centers[k] = centers[k + 1] - 0.5 * seg_lens[:, k + 1 : k + 2] * x_next - 0.5 * seg_lens[:, k : k + 1] * x_k
+
+    # Verify reconstructed start/end endpoints and every segment midpoint match the solved arc!
+    start_pt = centers[0] - 0.5 * seg_lens[:, 0:1] * frames[0][:, :, 0]
+    end_pt = centers[-1] + 0.5 * seg_lens[:, -1:] * frames[-1][:, :, 0]
+    assert float((start_pt - arc.points[:, 0]).norm(dim=-1).max()) < 1e-4
+    assert float((end_pt - arc.points[:, -1]).norm(dim=-1).max()) < 1e-4
+
+    # Verify PhysX D6 DOF resolver prefers :1 (rotY) and :2 (rotZ) even when :0 exists.
+    names_3dof = [f"joint_seg_{k}_to_parent:{d}" for k in range(1, 5) for d in (0, 1, 2)]
+    p3, y3 = resolve_bending_dofs(names_3dof, num_segments=5)
+    assert p3[0] == 1 and y3[0] == 2
+    names_2dof = [f"joint_seg_{k}_to_parent:{d}" for k in range(1, 5) for d in (1, 2)]
+    p2, y2 = resolve_bending_dofs(names_2dof, num_segments=5)
+    assert p2[0] == 0 and y2[0] == 1
+
+
+def test_deformable_nodal_arc_mapping_strips_spawn_offset_and_handles_vertical_tangents():
+    # Spawn a rest cylinder far away at (0.35, -0.25, 1.76) with radius 2 mm.
+    radius = 0.002
+    rings = 31
+    sides = 8
+    xs = torch.linspace(0.35, 0.65, rings)
+    angles = torch.linspace(0.0, math.tau * (1.0 - 1.0 / sides), sides)
+    verts = []
+    for x in xs:
+        for a in angles:
+            verts.append([float(x), -0.25 + radius * math.cos(float(a)), 1.76 + radius * math.sin(float(a))])
+    default_pos = torch.tensor(verts, dtype=torch.float32).unsqueeze(0).repeat(2, 1, 1)
+
+    # Construct a vertical-going arc so tangents pass right through [0, 0, +1].
+    t = torch.linspace(0.0, 1.0, 65)
+    pts = torch.stack((-0.05 * torch.sin(math.pi * t), torch.zeros_like(t), 0.15 + 0.30 * t), dim=-1).unsqueeze(0).repeat(2, 1, 1)
+    tans = torch.zeros_like(pts)
+    tans[:, 1:-1] = pts[:, 2:] - pts[:, :-2]
+    tans[:, 0] = pts[:, 1] - pts[:, 0]
+    tans[:, -1] = pts[:, -1] - pts[:, -2]
+    tans = tans / tans.norm(dim=-1, keepdim=True)
+
+    mapped = map_deformable_nodes_to_arc(default_pos, pts, tans)
+    assert torch.isfinite(mapped).all()
+    # Every mapped vertex must lie within radius + epsilon of its arc centerline point (no 1.76 m Z offset!).
+    u_idx = torch.linspace(0.0, 64.0, rings).repeat_interleave(sides)
+    lo = u_idx.clamp(0.0, 63.999).long()
+    frac = (u_idx - lo.float()).view(1, -1, 1)
+    expected_centers = torch.lerp(pts[:, lo], pts[:, lo + 1], frac)
+    radial_err = (mapped - expected_centers).norm(dim=-1)
+    assert float(radial_err.max()) <= radius + 1e-4
+    assert float(radial_err.min()) >= radius - 1e-4
+
+
+def test_physics_randomization_scales_stay_within_bounds():
+    s0, f0 = sample_physics_scales(16, False, (0.7, 1.3), (0.75, 1.25))
+    assert torch.allclose(s0, torch.ones(16)) and torch.allclose(f0, torch.ones(16))
+    s1, f1 = sample_physics_scales(64, True, (0.7, 1.3), (0.75, 1.25))
+    assert float(s1.min()) >= 0.7 and float(s1.max()) <= 1.3 and float(s1.std()) > 0.05
+    assert float(f1.min()) >= 0.75 and float(f1.max()) <= 1.25 and float(f1.std()) > 0.05

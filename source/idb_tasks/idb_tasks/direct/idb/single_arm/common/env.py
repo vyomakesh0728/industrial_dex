@@ -82,12 +82,9 @@ class SingleArmIDBEnv(DirectRLEnv):  # type: ignore[misc]
         self.arm.post_clone()
         if self.device == "cpu":
             self.scene.filter_collisions(global_prim_paths=["/World/ground"])
-        light_intensity = 1500.0
-        if self.cfg.variation.randomize_lighting:
-            lo, hi = self.cfg.variation.light_intensity_range
-            light_intensity = 0.5 * (lo + hi)
-        light = sim_utils.DomeLightCfg(intensity=light_intensity, color=(0.85, 0.85, 0.85))
+        light = sim_utils.DomeLightCfg(intensity=1500.0, color=(0.85, 0.85, 0.85))
         light.func("/World/Light", light)
+        self._light_prim_path = "/World/Light"
         self.tiled_cameras = {}
         for name, cam_cfg in self.cfg.camera_cfgs.items():
             self.tiled_cameras[name] = self.scene.sensors[name] = TiledCamera(cam_cfg)
@@ -176,11 +173,32 @@ class SingleArmIDBEnv(DirectRLEnv):  # type: ignore[misc]
         self.episode_done = terminated | time_out
         return terminated, time_out
 
+    def _randomize_dome_light(self) -> None:
+        if not self.cfg.variation.randomize_lighting:
+            return
+        from pxr import UsdLux  # type: ignore[import-not-found]
+        from isaacsim.core.utils.stage import get_current_stage  # type: ignore[import-not-found]
+
+        lo, hi = self.cfg.variation.light_intensity_range
+        intensity = float(lo + torch.rand(1).item() * (hi - lo))
+        prim = get_current_stage().GetPrimAtPath(self._light_prim_path)
+        if prim.IsValid():
+            UsdLux.DomeLight(prim).GetIntensityAttr().Set(intensity)
+
     def _reset_idx(self, env_ids: torch.Tensor) -> None:
         super()._reset_idx(env_ids)
         self.arm.reset(env_ids)
+        self._randomize_dome_light()
         nominal_neighbors = self.board.reset(env_ids)
         far_pos, far_quat, act_pos, act_quat = self.task.reset(env_ids, nominal_neighbors)
         self.wire_backend.reset_plugged(env_ids, far_pos, far_quat, act_pos, act_quat)
         self.scene.update(dt=0.0)
-        self._update_state()
+        self.arm.update()
+        self.wire_state = self.wire_backend.state()
+        origins = self.scene.env_origins
+        self.ee_local_pos = self.arm.ee_pos - origins
+        self.ee_local_quat = self.arm.ee_quat
+        self.port_local_pos = self.wire_state.insertion_end_pos - origins
+        self.tip_local_pos = self.wire_state.tip_pos - origins
+        # Refresh target/source seating geometry without triggering step-0 latch rip damage.
+        self.task.refresh_after_reset(env_ids)

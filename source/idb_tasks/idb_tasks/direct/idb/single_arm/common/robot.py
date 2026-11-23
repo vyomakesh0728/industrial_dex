@@ -58,7 +58,7 @@ class RobotAdapter:
 
     def _add_tool_body(self) -> None:
         from pxr import Gf, PhysxSchema, UsdGeom, UsdPhysics  # type: ignore[import-not-found]
-        from isaaclab.sim.utils import get_current_stage  # type: ignore[import-not-found]
+        from isaacsim.core.utils.stage import get_current_stage  # type: ignore[import-not-found]
 
         stage = get_current_stage()
         root = f"/World/envs/env_0/{self.prim_name}"

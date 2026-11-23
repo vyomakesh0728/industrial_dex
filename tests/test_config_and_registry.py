@@ -135,3 +135,18 @@ def test_deformable_wire_rejects_cpu_device():
     cfg.sim.device = "cpu"
     with pytest.raises(ValueError, match="CUDA"):
         resolve_env_cfg(cfg)
+
+
+def test_ur5_depth_camera_defines_valid_spawn_and_clipping_range():
+    import inspect
+    from idb_tasks.direct.idb.single_arm.ur5.robot import UR5Adapter
+
+    cfg = resolve_env_cfg(compose_env_cfg(SPECS[UR5_ETH_SWAP], mode="eval"))
+    cams = UR5Adapter.camera_cfgs(cfg)
+    assert cams["wrist_d405_depth"]["prim_path"].endswith("wrist_3_link/wrist_d405_depth")
+    assert cams["wrist_d405_depth"]["clipping_range"] == (0.04, 1.5)
+    # Also verify live Isaac Lab branch spawns a PinholeCameraCfg with clipping_range for distance_to_camera.
+    src = inspect.getsource(UR5Adapter.camera_cfgs)
+    depth_block = src.split('"wrist_d405_depth": TiledCameraCfg(', 1)[1]
+    assert "PinholeCameraCfg" in depth_block and "clipping_range=" in depth_block
+    assert "spawn=None" not in depth_block

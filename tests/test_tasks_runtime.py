@@ -197,3 +197,55 @@ def test_fiber_maintenance_tasks_require_polishing_before_reinsertion(task_id: s
     assert bool(rubric.passed[0]) and int(rubric.total_score[0]) == expected_max
     assert bool(rubric.phase_flags["grasp"][0]) and bool(rubric.phase_flags["clean"][0]) and bool(rubric.phase_flags["insert"][0])
     assert not bool(rubric.passed[1]), "Skipping figure-eight polishing must NOT pass maintenance task"
+
+
+def test_refresh_after_reset_prevents_step0_latch_rip_damage():
+    env, task, set_connector, (_, _, act_pos, act_quat) = _build_task_harness(
+        "IDB-Franka-Articulation-EthernetPortSwap-v0", num_envs=2
+    )
+    # Simulate a transient wrench spike on reset before the first physics step.
+    env.arm.wrench[:, 0] = 25.0
+    all_ids = torch.tensor([0, 1])
+    task.reset(all_ids, nominal_neighbors=None)
+    set_connector(act_pos, act_quat)
+    task.refresh_after_reset(all_ids)
+    assert not bool(task.latch.damaged.any())
+    assert not bool(task.removed_from_source.any())
+    assert task.target_seating is not None
+    obs = task.observations()
+    assert obs.shape == (2, env.cfg.observation_space) and torch.isfinite(obs).all()
+
+
+def test_board_reset_syncs_kinematic_physx_bodies_when_randomized():
+    env, _, _, _ = _build_task_harness("IDB-Franka-Articulation-EthernetPortSwap-v0", num_envs=2, variation="randomized")
+    board = env.board
+
+    class _Recorder:
+        def __init__(self):
+            self.last_state = None
+            self.last_ids = None
+            self.reset_calls = 0
+
+        def write_root_state_to_sim(self, state, env_ids=None):
+            self.last_state = state.clone()
+            self.last_ids = env_ids.clone() if env_ids is not None else None
+
+        def reset(self, env_ids=None):
+            self.reset_calls += 1
+
+    board.frame_obj = _Recorder()
+    board.polishing_pad_obj = _Recorder()
+    board.port_objs = {pid: _Recorder() for pid in board.port_ids}
+    board.clip_objs = {c.name: _Recorder() for c in board.spec.cable_clips}
+
+    ids = torch.tensor([0, 1])
+    board.reset(ids)
+
+    assert board.frame_obj.reset_calls == 1
+    assert torch.allclose(board.frame_obj.last_state[:, :3], board.board_pos_w, atol=1e-6)
+    pad_c, _, _ = board.polishing_pad_world_pose()
+    assert torch.allclose(board.polishing_pad_obj.last_state[:, :3], pad_c, atol=1e-6)
+    for pid in board.port_ids:
+        p_pos, p_quat = board.port_world_pose(pid)
+        assert torch.allclose(board.port_objs[pid].last_state[:, :3], p_pos, atol=1e-6)
+        assert torch.allclose(board.port_objs[pid].last_state[:, 3:7], p_quat, atol=1e-6)

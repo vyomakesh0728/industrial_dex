@@ -10,6 +10,43 @@ from .math_utils import quat_apply, resample_polyline
 from .wire_state import PluggedCableArc, WireState, tip_from_root
 
 
+def map_deformable_nodes_to_arc(
+    default_nodal_pos: torch.Tensor,
+    arc_points: torch.Tensor,
+    arc_tangents: torch.Tensor,
+) -> torch.Tensor:
+    """Map rest FEM cylinder nodes (N, V, 3) onto solved 3D arc points/tangents (N, K, 3).
+
+    Subtracts the rest cylinder's Y/Z centerline offset before applying cross-section
+    displacements so world spawn position never leaks into the bent nodal coordinates.
+    Uses an orthogonal fallback axis whenever tangents are near-vertical.
+    """
+    device, dtype = default_nodal_pos.device, default_nodal_pos.dtype
+    k_samples = arc_points.shape[1]
+
+    rest0 = default_nodal_pos[0]  # (V, 3)
+    rest_x = rest0[:, 0]
+    rest_u = (rest_x - rest_x.min()) / (rest_x.max() - rest_x.min()).clamp_min(1e-6)
+    # Remove spawn-position offset in Y and Z so local cross-section offsets stay within [-radius, +radius].
+    rest_yz_local = rest0[:, 1:3] - rest0[:, 1:3].mean(dim=0, keepdim=True)
+
+    u_idx = (rest_u * (k_samples - 1)).clamp(0.0, k_samples - 1.0001)
+    lo = u_idx.long()
+    frac = (u_idx - lo.float()).view(1, -1, 1)
+    centers = torch.lerp(arc_points[:, lo], arc_points[:, lo + 1], frac)
+    tans = torch.lerp(arc_tangents[:, lo], arc_tangents[:, lo + 1], frac)
+    tans = tans / tans.norm(dim=-1, keepdim=True).clamp_min(1e-6)
+
+    up_z = torch.tensor([0.0, 0.0, 1.0], device=device, dtype=dtype).view(1, 1, 3).expand_as(tans)
+    fallback_x = torch.tensor([1.0, 0.0, 0.0], device=device, dtype=dtype).view(1, 1, 3).expand_as(tans)
+    ref = torch.where((tans * up_z).sum(dim=-1, keepdim=True).abs() > 0.90, fallback_x, up_z)
+    n1 = torch.cross(ref, tans, dim=-1)
+    n1 = n1 / n1.norm(dim=-1, keepdim=True).clamp_min(1e-6)
+    n2 = torch.cross(tans, n1, dim=-1)
+    yz = rest_yz_local.unsqueeze(0)
+    return centers + yz[..., :1] * n1 + yz[..., 1:2] * n2
+
+
 class DeformableWire:
     """FEM soft-body cable with independent rigid ``start_port`` and ``end_port`` connectors."""
 
@@ -56,8 +93,6 @@ class DeformableWire:
         weights = torch.nn.functional.one_hot(idx, bins.numel() - 1).float()
         weights = weights[:, weights.sum(0) > 0]
         self._bin_weights = weights / weights.sum(0, keepdim=True)
-        self._rest_u = (rest_x - rest_x.min()) / (rest_x.max() - rest_x.min()).clamp_min(1e-6)
-        self._rest_yz = self.wire.data.default_nodal_state_w[0, :, 1:3].clone()
         self._held_far = self.start_port.data.root_pos_w.clone()
         self._held_far_quat = self.start_port.data.root_quat_w.clone()
 
@@ -97,29 +132,16 @@ class DeformableWire:
         far_exit = far_port_pos + quat_apply(far_port_quat, rear)
         act_exit = active_port_pos + quat_apply(active_port_quat, rear)
         exit_dir = quat_apply(far_port_quat, torch.tensor([[-1.0, 0.0, 0.0]], device=device).expand(n, 3))
-        k_samples = 65
         arc = PluggedCableArc.solve(
             far_exit,
             act_exit,
             cable_length=self.assembly_cfg.deformable.total_length,
-            num_points=k_samples,
+            num_points=65,
             exit_normal=exit_dir,
             lateral_bow=self.cfg.lateral_bow,
         )
-        # Interpolate each FEM node onto its arc-length coordinate u in [0, 1].
         nodal = self.wire.data.default_nodal_state_w[env_ids].clone()
-        u_idx = (self._rest_u * (k_samples - 1)).clamp(0.0, k_samples - 1.0001)
-        lo = u_idx.long()
-        frac = (u_idx - lo.float()).view(1, -1, 1)
-        centers = torch.lerp(arc.points[:, lo], arc.points[:, lo + 1], frac)
-        tans = torch.lerp(arc.tangents[:, lo], arc.tangents[:, lo + 1], frac)
-        tans = tans / tans.norm(dim=-1, keepdim=True).clamp_min(1e-6)
-        up = torch.tensor([0.0, 0.0, 1.0], device=device).view(1, 1, 3).expand_as(tans)
-        n1 = torch.cross(up, tans, dim=-1)
-        n1 = n1 / n1.norm(dim=-1, keepdim=True).clamp_min(1e-6)
-        n2 = torch.cross(tans, n1, dim=-1)
-        yz = self._rest_yz.unsqueeze(0)
-        nodal[..., :3] = centers + yz[..., :1] * n1 + yz[..., 1:2] * n2
+        nodal[..., :3] = map_deformable_nodes_to_arc(nodal[..., :3], arc.points, arc.tangents)
         nodal[..., 3:] = 0.0
         self.wire.write_nodal_state_to_sim(nodal, env_ids)
         self.wire.reset(env_ids)

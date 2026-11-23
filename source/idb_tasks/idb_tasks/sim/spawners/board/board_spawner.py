@@ -90,14 +90,14 @@ def build_idb_board_usd(
             (0.12, 0.12, 0.14),
         )
 
-    # Panels A, B, C: official 3MF visual meshes + top/bottom/side frame border colliders leaving port strip open.
-    panels_xf = UsdGeom.Xform.Define(stage, f"{prim_path}/panels")
+    # Panels A, B, C nested under /frame so moving the kinematic frame RigidObject moves all panel visuals too.
+    UsdGeom.Xform.Define(stage, f"{prim_path}/frame/panels")
     for letter, panel in board.panels.items():
-        p_xf = UsdGeom.Xform.Define(stage, f"{prim_path}/panels/panel_{letter.lower()}")
+        p_xf = UsdGeom.Xform.Define(stage, f"{prim_path}/frame/panels/panel_{letter.lower()}")
         p_xf.AddTranslateOp().Set(Gf.Vec3d(0.0, panel.center[1], panel.center[2]))
         usd_file = os.path.join(IDB_ASSET_DIR, panel.usd_relpath)
         if os.path.isfile(usd_file):
-            vis = UsdGeom.Xform.Define(stage, f"{prim_path}/panels/panel_{letter.lower()}/visual")
+            vis = UsdGeom.Xform.Define(stage, f"{prim_path}/frame/panels/panel_{letter.lower()}/visual")
             vis.GetPrim().GetReferences().AddReference(usd_file)
         # Upper/lower horizontal strips (outside +/-11.5 mm port band) and left/right mounting ears.
         pz_c = panel.center[2]

@@ -22,8 +22,14 @@ class UR5Adapter(RobotAdapter):
         if not HAS_ISAACLAB:
             return {
                 "wrist_d405_rgb": {"prim_path": f"{PRIM_PATH}/{PRIM_NAME}/RSD455/Camera_OmniVision_OV9782_Color", "data_type": "rgb", "resolution": size},
-                "wrist_d405_depth": {"prim_path": f"{PRIM_PATH}/{PRIM_NAME}/RSD455/Camera_Pseudo_Depth", "data_type": "distance_to_camera", "resolution": size},
+                "wrist_d405_depth": {
+                    "prim_path": f"{PRIM_PATH}/{PRIM_NAME}/wrist_3_link/wrist_d405_depth",
+                    "data_type": "distance_to_camera",
+                    "resolution": size,
+                    "clipping_range": (0.04, 1.5),
+                },
             }
+        import isaaclab.sim as sim_utils  # type: ignore[import-not-found]
         from isaaclab.sensors import TiledCameraCfg  # type: ignore[import-not-found]
 
         return {
@@ -34,9 +40,18 @@ class UR5Adapter(RobotAdapter):
                 width=size,
                 height=size,
             ),
+            # Isaac Lab TiledCamera requires spawn.clipping_range for distance_to_camera.
             "wrist_d405_depth": TiledCameraCfg(
-                prim_path=f"{PRIM_PATH}/{PRIM_NAME}/RSD455/Camera_Pseudo_Depth",
-                spawn=None,
+                prim_path=f"{PRIM_PATH}/{PRIM_NAME}/wrist_3_link/wrist_d405_depth",
+                offset=TiledCameraCfg.OffsetCfg(
+                    pos=(0.06, 0.0, 0.04), rot=(-0.70614, 0.03701, 0.03701, -0.70614), convention="ros"
+                ),
+                spawn=sim_utils.PinholeCameraCfg(
+                    focal_length=18.0,
+                    focus_distance=400.0,
+                    horizontal_aperture=20.955,
+                    clipping_range=(0.04, 1.5),
+                ),
                 data_types=["distance_to_camera"],
                 width=size,
                 height=size,
@@ -48,7 +63,7 @@ class UR5Adapter(RobotAdapter):
         if not HAS_ISAACLAB:
             return
         from pxr import UsdPhysics  # type: ignore[import-not-found]
-        from isaaclab.sim.utils import get_current_stage  # type: ignore[import-not-found]
+        from isaacsim.core.utils.stage import get_current_stage  # type: ignore[import-not-found]
 
         stage = get_current_stage()
         for env_id in range(self.env.scene.cfg.num_envs):

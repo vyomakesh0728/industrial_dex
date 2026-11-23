@@ -57,7 +57,7 @@ For optical connectors, `ConnectorProfile.ferrule` stores exact ceramic ferrule 
 
 Two cable backends mirror WireCraft:
 
-1. **Articulated capsule chain (`ArticulationWire`)**: 14 to 16 overlapping rigid capsules linked by PhysX D6 angular bending drives (`solver_position_iteration_count = 64`, `max_depenetration_velocity = 0.1 m/s`, segment linear and angular damping `5.0`, adjacent-capsule collision filtering). Rigid `start_port` and `end_port` bodies attach via `UsdPhysics.FixedJoint` and support heterogeneous families (such as `lc_simplex` at `B5` and `sc_simplex` at `A5`).
+1. **Articulated capsule chain (`ArticulationWire`)**: 14 to 16 overlapping rigid capsules linked by PhysX D6 angular bending drives (`rotX` axial torsion locked, `rotY`/`rotZ` driven, `solver_position_iteration_count = 64`, `max_depenetration_velocity = 0.1 m/s`, segment linear and angular damping `5.0`, adjacent-capsule collision filtering). Rigid `start_port` and `end_port` bodies attach via `UsdPhysics.FixedJoint` and support heterogeneous families (such as `lc_simplex` at `B5` and `sc_simplex` at `A5`).
 2. **FEM deformable cable (`DeformableWire`)**: closed cylindrical tetrahedral mesh with `PhysxDeformableBodyMaterialAPI` (Young's modulus, Poisson's ratio, dynamic friction, density) coupled to rigid `start_port` and `end_port` bodies via `PhysxPhysicsAttachment` and `PhysxAutoAttachmentAPI` (requires CUDA).
 
 Three BOM-calibrated presets live in `sim/spawners/wires/wire_presets.py`:
@@ -68,7 +68,7 @@ Three BOM-calibrated presets live in `sim/spawners/wires/wire_presets.py`:
 | `os2_fiber_simplex` | `0.30 m` | `3.0 mm` | `30.0 mm` | `0.14 Nm/rad` |
 | `os2_fiber_duplex` | `0.30 m` | `4.0 mm` | `30.0 mm` | `0.20 Nm/rad` |
 
-At reset, `PluggedCableArc.solve` solves a 3D cubic Bezier elastica loop between the anchored Panel B port and the starting Panel A port with intermediate control points spread orthogonal to the panel exit normal. The solved curve matches the `0.30 m` cable length within `3 mm`, bows cleanly into `-X` without intersecting the board, and keeps initial curvature above `40 mm` so cables never start kinked. During stepping, the far connector in Panel B is held by a deadbeat mass-scaled spring (`HOLD_STIFFNESS = 0.5`, `HOLD_DAMPING = 0.5`) so pulling the active end never destabilizes the PhysX articulation solver.
+At reset, `PluggedCableArc.solve` solves a 3D cubic Bezier elastica loop between the anchored Panel B port and the starting Panel A port with intermediate control points spread orthogonal to the panel exit normal. The solved curve matches the `0.30 m` cable length within `3 mm`, bows cleanly into `-X` without intersecting the board, and keeps initial curvature above `40 mm` so cables never start kinked. `ArticulationWire` converts the solved polyline into zero-twist Bishop segment frames and relative `(rotY, rotZ)` D6 joint angles anchored at PhysX's chosen articulation root segment; `DeformableWire` strips rest-mesh world offsets and maps every FEM vertex onto the arc cross-section with a vertical-tangent fallback. During stepping, the far connector in Panel B is held by a deadbeat mass-scaled spring (`HOLD_STIFFNESS = 0.5`, `HOLD_DAMPING = 0.5`) so pulling the active end never destabilizes the PhysX articulation solver. When `variation.randomize_board_pose` is enabled, `IDBBoardRuntime` synchronizes kinematic PhysX root states for `/frame` (including nested `/frame/panels`), `/polishing_pad`, all 32 `/ports/*` sockets, and cable clips.
 
 ## Interaction mechanics and completion evaluators
 

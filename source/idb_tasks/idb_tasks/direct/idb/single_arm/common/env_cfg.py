@@ -340,13 +340,13 @@ def resolve_env_cfg(cfg: SingleArmIDBEnvCfg) -> SingleArmIDBEnvCfg:
     if cfg.wire.kind == "deformable" and "cuda" not in str(cfg.sim.device):
         raise ValueError("Deformable FEM wires require a CUDA device.")
 
-    # Apply paper Table I sensor configuration shorthand when requested.
+    # Apply paper Table I sensor configuration shorthand while preserving any extra cameras (e.g., --video side cam).
     if cfg.sensors.paper_config_id is not None:
         if cfg.sensors.paper_config_id not in PAPER_SENSOR_CONFIGS:
             raise ValueError(f"sensors.paper_config_id must be in 1..6, got {cfg.sensors.paper_config_id!r}.")
         preset = PAPER_SENSOR_CONFIGS[cfg.sensors.paper_config_id]
         cfg.sensors.enable_cameras = True
-        cfg.sensors.cameras = list(preset["cameras"])
+        cfg.sensors.cameras = list(dict.fromkeys([*preset["cameras"], *cfg.sensors.cameras]))
         cfg.sensors.enable_wrist_ft = bool(preset["enable_wrist_ft"])
 
     cfg.sim.render_interval = cfg.decimation * cfg.sensors.render_stride

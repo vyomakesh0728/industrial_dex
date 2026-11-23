@@ -68,3 +68,42 @@ def test_verify_matrix_dry_run_resolves_all_20_envs(tmp_path):
     report = json.loads((out_dir / "matrix_report.json").read_text(encoding="utf-8"))
     assert report["total"] == 20 and report["passed"] == 20 and report["failed"] == 0
     assert (out_dir / "matrix_report.md").is_file()
+
+
+def test_run_py_video_preserves_side_camera_with_sensor_config_and_defers_runtime_imports(tmp_path):
+    import ast
+
+    # 1. Static check: scripts/idb/run.py must NOT import idb_tasks/gymnasium/torch/isaaclab.envs at module top level
+    # so AppLauncher runs before Omniverse/Isaac Lab module imports during live execution.
+    tree = ast.parse((REPO_ROOT / "scripts/idb/run.py").read_text(encoding="utf-8"))
+    top_imports: set[str] = set()
+    for node in tree.body:
+        if isinstance(node, ast.Import):
+            top_imports.update(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            top_imports.add(node.module.split(".")[0])
+    for forbidden in ("idb_tasks", "gymnasium", "torch", "isaaclab", "isaacsim"):
+        assert forbidden not in top_imports, f"scripts/idb/run.py imports {forbidden} before AppLauncher!"
+
+    # 2. Behavioral check: --video combined with --sensor-config 1 must keep the 'side' camera alongside Table I cams.
+    out_dir = tmp_path / "video_sensor"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/idb/run.py",
+            "--task",
+            "IDB-Franka-Articulation-SCFiberMaintenance-v0",
+            "--sensor-config",
+            "1",
+            "--video",
+            "--dry-run",
+            "--output",
+            str(out_dir),
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stderr
+    res = json.loads((out_dir / "result.json").read_text(encoding="utf-8"))
+    assert set(res["cameras"]) == {"side", "wrist_d405_rgb", "scene_d435i_rgb"}

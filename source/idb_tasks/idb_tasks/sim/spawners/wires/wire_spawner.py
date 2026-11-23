@@ -41,14 +41,14 @@ def _apply_d6_bending_joint(
     joint.CreateLocalPos1Attr().Set(Gf.Vec3f(*pos1))
     joint.CreateLocalRot1Attr().Set(Gf.Quatf(1.0))
 
-    # Lock all 3 translational DOFs.
-    for axis in ("transX", "transY", "transZ"):
+    # Lock all 3 translational DOFs and axial torsion (rotX), matching WireCraft's bending-only wire chain.
+    for axis in ("transX", "transY", "transZ", "rotX"):
         lim = UsdPhysics.LimitAPI.Apply(joint.GetPrim(), axis)
         lim.CreateLowAttr().Set(1.0)
         lim.CreateHighAttr().Set(-1.0)
 
-    # Angular bending/torsion drives around X, Y, Z.
-    for axis in ("rotX", "rotY", "rotZ"):
+    # Angular bending drives around Y and Z.
+    for axis in ("rotY", "rotZ"):
         drive = UsdPhysics.DriveAPI.Apply(joint.GetPrim(), axis)
         drive.CreateTypeAttr().Set("force")
         drive.CreateTargetPositionAttr().Set(0.0)

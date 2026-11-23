@@ -12,10 +12,17 @@ from __future__ import annotations
 import copy
 from dataclasses import dataclass, fields, is_dataclass
 import importlib.util
+import sys
 from typing import Any
 
-HAS_ISAACLAB: bool = importlib.util.find_spec("isaaclab") is not None
-HAS_ISAACSIM: bool = importlib.util.find_spec("isaacsim") is not None
+HAS_ISAACLAB_PKG: bool = importlib.util.find_spec("isaaclab") is not None
+_KIT_ACTIVE: bool = (
+    "omni" in sys.modules
+    or "carb" in sys.modules
+    or importlib.util.find_spec("omni") is not None
+)
+HAS_ISAACLAB: bool = HAS_ISAACLAB_PKG and _KIT_ACTIVE
+HAS_ISAACSIM: bool = importlib.util.find_spec("isaacsim") is not None and _KIT_ACTIVE
 HAS_PHYSX_SCHEMA: bool = importlib.util.find_spec("pxr.PhysxSchema") is not None
 
 
