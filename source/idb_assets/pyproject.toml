@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "idb_assets"
+version = "0.1.0"
+description = "CAD-derived OpenUSD assets and geometry manifests for the Industrial Dexterity Benchmark (IDB) Board #1."
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["idb_assets*"]
+
+[tool.setuptools.package-data]
+idb_assets = ["data/**/*"]

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "idb_tasks"
+version = "0.1.0"
+description = "WireCraft-aligned Isaac Lab simulation environments for the Industrial Dexterity Benchmark (IDB) datacenter cable-management suite."
+requires-python = ">=3.10"
+dependencies = [
+    "gymnasium>=1.0",
+    "idb_assets",
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+    "torch>=2.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["idb_tasks*"]
+
+[tool.setuptools.package-data]
+idb_tasks = ["direct/idb/single_arm/common/presets/**/*.yaml"]

@@ -1,0 +1,16 @@
+[package]
+version = "0.1.0"
+title = "IDB Datacenter Simulation Environments"
+description = "Modular Isaac Lab simulation environments for Industrial Dexterity Benchmark Board #1 following WireCraft's architecture."
+category = "robotics"
+keywords = ["robotics", "simulation", "idb", "wirecraft", "isaaclab"]
+
+[dependencies]
+"isaaclab" = {}
+"idb_assets" = {}
+
+[core]
+reloadable = false
+
+[[python.module]]
+name = "idb_tasks"

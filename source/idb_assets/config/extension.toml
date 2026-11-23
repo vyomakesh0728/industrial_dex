@@ -1,0 +1,15 @@
+[package]
+version = "0.1.0"
+title = "IDB Simulation Assets"
+description = "CAD-derived OpenUSD assets and board manifests for Industrial Dexterity Benchmark datacenter tasks."
+category = "robotics"
+keywords = ["robotics", "simulation", "idb", "datacenter", "isaaclab"]
+
+[dependencies]
+"isaaclab" = {}
+
+[core]
+reloadable = false
+
+[[python.module]]
+name = "idb_assets"
