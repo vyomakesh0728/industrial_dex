@@ -340,12 +340,24 @@ def apply_cli(env_cfg: SingleArmIDBEnvCfg, explicit: Mapping[str, Any], legacy: 
         env_cfg.composition["cli"].append(f"{path}={value!r}")
 
 
+def _yaml_safe(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {str(k): _yaml_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_yaml_safe(v) for v in obj]
+    if callable(obj) and hasattr(obj, "__module__") and hasattr(obj, "__qualname__"):
+        return f"{obj.__module__}:{obj.__qualname__}"
+    if isinstance(obj, (bool, int, float, str)) or obj is None:
+        return obj
+    return repr(obj)
+
+
 def save_resolved(log_dir: str, env_cfg: SingleArmIDBEnvCfg) -> None:
     """Save resolved environment config and composition provenance to params/*.yaml."""
     params_dir = os.path.join(log_dir, "params")
     os.makedirs(params_dir, exist_ok=True)
     with open(os.path.join(params_dir, "env.yaml"), "w", encoding="utf-8") as f:
-        yaml.safe_dump(env_cfg.to_dict(), f, sort_keys=False)
-    selection = {"env": env_cfg.composition, "argv": list(sys.argv)}
+        yaml.safe_dump(_yaml_safe(env_cfg.to_dict()), f, sort_keys=False)
+    selection = {"env": _yaml_safe(env_cfg.composition), "argv": list(sys.argv)}
     with open(os.path.join(params_dir, "selection.yaml"), "w", encoding="utf-8") as f:
         yaml.safe_dump(selection, f, sort_keys=False)
