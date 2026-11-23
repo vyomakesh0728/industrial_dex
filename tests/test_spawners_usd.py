@@ -124,14 +124,16 @@ def test_heterogeneous_wire_spawner_supports_lc_to_sc_and_deformable():
     assert math.isclose(max(p[0] for p in start_tip), get_connector_profile("lc_simplex").tip_length, abs_tol=1e-5)
     assert math.isclose(max(p[0] for p in end_tip), get_connector_profile("sc_simplex").tip_length, abs_tol=1e-5)
 
-    # Inter-segment bending joints must lock axial torsion (rotX) and drive bending (rotY, rotZ).
+    # Inter-segment D6 joints must lock translations and drive rotX (0.5x torsion), rotY, and rotZ.
     j1 = stage.GetPrimAtPath("/World/wire_sc_lc/joint_seg_1_to_parent")
     assert j1.IsValid()
-    rot_x_lim = UsdPhysics.LimitAPI(j1, "rotX")
-    assert rot_x_lim.GetLowAttr().Get() > rot_x_lim.GetHighAttr().Get()
-    assert not UsdPhysics.DriveAPI(j1, "rotX").GetStiffnessAttr().HasAuthoredValue()
-    assert UsdPhysics.DriveAPI(j1, "rotY").GetStiffnessAttr().Get() > 0.0
-    assert UsdPhysics.DriveAPI(j1, "rotZ").GetStiffnessAttr().Get() > 0.0
+    for axis in ("transX", "transY", "transZ"):
+        lim = UsdPhysics.LimitAPI(j1, axis)
+        assert lim.GetLowAttr().Get() > lim.GetHighAttr().Get()
+    sx = UsdPhysics.DriveAPI(j1, "rotX").GetStiffnessAttr().Get()
+    sy = UsdPhysics.DriveAPI(j1, "rotY").GetStiffnessAttr().Get()
+    sz = UsdPhysics.DriveAPI(j1, "rotZ").GetStiffnessAttr().Get()
+    assert sy > 0.0 and sz == pytest.approx(sy) and sx == pytest.approx(0.5 * sy)
 
     # Deformable FEM mesh wire.
     fem_prim = build_deformable_wire_mesh_usd(

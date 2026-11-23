@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import torch
 
+from idb_tasks.sim.spawners.ports.connector_profiles import get_connector_profile
 from idb_tasks.utils.isaac_compat import require_isaaclab
 
-from .math_utils import quat_apply, quat_apply_inverse, quat_inv, quat_mul, resample_polyline
+from .math_utils import quat_apply, quat_apply_inverse, resample_polyline
 from .wire_state import PluggedCableArc, WireState, tip_from_root
 
 HOLD_STIFFNESS = 0.5
@@ -53,73 +54,101 @@ def _quat_from_rot_matrix(rot: torch.Tensor) -> torch.Tensor:
     return q / q.norm(dim=-1, keepdim=True).clamp_min(1e-12)
 
 
+def _rot_matrix_from_quat(q: torch.Tensor) -> torch.Tensor:
+    """Convert wxyz unit quaternions (..., 4) to rotation matrices (..., 3, 3)."""
+    w, x, y, z = q.unbind(-1)
+    r = torch.zeros(*q.shape[:-1], 3, 3, device=q.device, dtype=q.dtype)
+    r[..., 0, 0] = 1.0 - 2.0 * (y * y + z * z)
+    r[..., 0, 1] = 2.0 * (x * y - z * w)
+    r[..., 0, 2] = 2.0 * (x * z + y * w)
+    r[..., 1, 0] = 2.0 * (x * y + z * w)
+    r[..., 1, 1] = 1.0 - 2.0 * (x * x + z * z)
+    r[..., 1, 2] = 2.0 * (y * z - x * w)
+    r[..., 2, 0] = 2.0 * (x * z - y * w)
+    r[..., 2, 1] = 2.0 * (y * z + x * w)
+    r[..., 2, 2] = 1.0 - 2.0 * (x * x + y * y)
+    return r
+
+
 def compute_chain_arc_joint_state(
     arc_points: torch.Tensor,
+    far_port_quat: torch.Tensor,
+    active_port_quat: torch.Tensor,
     root_seg_index: int = 0,
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Compute zero-twist Bishop segment frames and relative (rotY, rotZ) joint angles along an arc.
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Compute port-aligned twisted Bishop segment frames and relative (rotX, rotY, rotZ) joint angles.
 
-    Args:
-        arc_points: (N, num_segments + 1, 3) polyline endpoints of each capsule segment.
-        root_seg_index: Index in ``[0, num_segments - 1]`` of the PhysX articulation root segment.
+    Seeds ``seg_0`` at ``R(far_port_quat) @ R_z(pi)`` (matching ``joint_start_port``'s USD FixedJoint),
+    parallel-transports frames along the arc, distributes the exact residual axial roll needed to match
+    ``active_port_quat`` uniformly across all ``S - 1`` inter-segment joints, and extracts intrinsic
+    XYZ Euler angles ``R_x(rx) @ R_y(ry) @ R_z(rz) = R_{k-1}^T @ R_k``.
 
     Returns:
         root_pos: (N, 3) world center of ``seg_{root_seg_index}``.
         root_quat: (N, 4) wxyz world orientation of ``seg_{root_seg_index}``.
-        rel_pitch_y: (N, num_segments - 1) relative Y bending angle at each inter-segment joint (rad).
-        rel_yaw_z: (N, num_segments - 1) relative Z bending angle at each inter-segment joint (rad).
+        rel_roll_x: (N, num_segments - 1) relative X torsion angle per joint (rad).
+        rel_pitch_y: (N, num_segments - 1) relative Y bending angle per joint (rad).
+        rel_yaw_z: (N, num_segments - 1) relative Z bending angle per joint (rad).
     """
     n, k_pts, _ = arc_points.shape
     num_segs = k_pts - 1
     device, dtype = arc_points.device, arc_points.dtype
 
-    seg_vecs = arc_points[:, 1:] - arc_points[:, :-1]  # (N, S, 3)
+    seg_vecs = arc_points[:, 1:] - arc_points[:, :-1]
     seg_centers = 0.5 * (arc_points[:, 1:] + arc_points[:, :-1])
     x_axes = seg_vecs / seg_vecs.norm(dim=-1, keepdim=True).clamp_min(1e-9)
 
-    # Parallel-transported Bishop frames: minimal twist from segment k-1 to segment k.
-    z_ref = torch.tensor([0.0, 0.0, 1.0], device=device, dtype=dtype).view(1, 3).expand(n, 3)
-    x_ref = torch.tensor([1.0, 0.0, 0.0], device=device, dtype=dtype).view(1, 3).expand(n, 3)
-    x0 = x_axes[:, 0]
-    ref0 = torch.where((x0 * z_ref).sum(dim=-1, keepdim=True).abs() > 0.90, x_ref, z_ref)
-    y0 = torch.cross(ref0, x0, dim=-1)
-    y0 = y0 / y0.norm(dim=-1, keepdim=True).clamp_min(1e-9)
-    z0 = torch.cross(x0, y0, dim=-1)
-
-    frames = [torch.stack((x0, y0, z0), dim=-1)]
-    rel_pitch = []
-    rel_yaw = []
+    rz_pi = torch.diag(torch.tensor([-1.0, -1.0, 1.0], device=device, dtype=dtype)).unsqueeze(0).expand(n, 3, 3)
+    r0 = torch.bmm(_rot_matrix_from_quat(far_port_quat), rz_pi)
+    frames = [r0]
     for k in range(1, num_segs):
-        r_prev = frames[-1]  # (N, 3, 3)
-        x_next_w = x_axes[:, k]
-        # Express x_next in previous segment's local frame (where locked rotX=0).
-        x_next_local = torch.einsum("nji,nj->ni", r_prev, x_next_w)
-        # Intrinsic XYZ (with rx=0): R_y(pitch) @ R_z(yaw) @ [1, 0, 0] = [cp*cy, sy, -sp*cy]
-        # Wait: R_y(p) @ R_z(y) @ e_x:
-        #   R_z(y) @ [1,0,0] = [cos y, sin y, 0]
-        #   R_y(p) @ [cos y, sin y, 0] = [cos p cos y, sin y, -sin p cos y]
-        # So yaw = asin(clamp(x_local_y)), pitch = atan2(-x_local_z, x_local_x)!
-        yaw = torch.asin(x_next_local[:, 1].clamp(-0.9999, 0.9999))
-        pitch = torch.atan2(-x_next_local[:, 2], x_next_local[:, 0].clamp_min(1e-6))
-        rel_pitch.append(pitch)
-        rel_yaw.append(yaw)
+        r_prev = frames[-1]
+        x_prev = r_prev[:, :, 0]
+        x_next = x_axes[:, k]
+        v = torch.cross(x_prev, x_next, dim=-1)
+        c = (x_prev * x_next).sum(dim=-1, keepdim=True).clamp(-0.999999, 0.999999)
+        y_prev = r_prev[:, :, 1]
+        vxy = torch.cross(v, y_prev, dim=-1)
+        y_next = y_prev + vxy + torch.cross(v, vxy, dim=-1) / (1.0 + c).clamp_min(1e-6)
+        y_next = y_next - (y_next * x_next).sum(dim=-1, keepdim=True) * x_next
+        y_next = y_next / y_next.norm(dim=-1, keepdim=True).clamp_min(1e-9)
+        z_next = torch.cross(x_next, y_next, dim=-1)
+        frames.append(torch.stack((x_next, y_next, z_next), dim=-1))
 
-        cp, sp = torch.cos(pitch), torch.sin(pitch)
-        cy, sy = torch.cos(yaw), torch.sin(yaw)
-        r_rel = torch.zeros(n, 3, 3, device=device, dtype=dtype)
-        r_rel[:, 0, 0] = cp * cy
-        r_rel[:, 0, 1] = -cp * sy
-        r_rel[:, 0, 2] = sp
-        r_rel[:, 1, 0] = sy
-        r_rel[:, 1, 1] = cy
-        r_rel[:, 2, 0] = -sp * cy
-        r_rel[:, 2, 1] = sp * sy
-        r_rel[:, 2, 2] = cp
-        frames.append(torch.bmm(r_prev, r_rel))
+    # Measure exact axial twist needed at seg_{S-1} to align its (Y, Z) axes with active_port_quat.
+    r_target = _rot_matrix_from_quat(active_port_quat)
+    r_end = frames[-1]
+    cos_phi = (r_end[:, :, 1] * r_target[:, :, 1]).sum(dim=-1)
+    sin_phi = (r_end[:, :, 2] * r_target[:, :, 1]).sum(dim=-1)
+    total_twist = torch.atan2(sin_phi, cos_phi)
+
+    twisted = [frames[0]]
+    denom = max(num_segs - 1, 1)
+    for k in range(1, num_segs):
+        phi = total_twist * (k / denom)
+        cp, sp = torch.cos(phi).unsqueeze(-1), torch.sin(phi).unsqueeze(-1)
+        x_k, y_k, z_k = frames[k][:, :, 0], frames[k][:, :, 1], frames[k][:, :, 2]
+        twisted.append(torch.stack((x_k, cp * y_k + sp * z_k, -sp * y_k + cp * z_k), dim=-1))
+
+    rel_roll, rel_pitch, rel_yaw = [], [], []
+    for k in range(1, num_segs):
+        r_rel = torch.bmm(twisted[k - 1].transpose(1, 2), twisted[k])
+        ry = torch.asin(r_rel[:, 0, 2].clamp(-0.999999, 0.999999))
+        rz = torch.atan2(-r_rel[:, 0, 1], r_rel[:, 0, 0])
+        rx = torch.atan2(-r_rel[:, 1, 2], r_rel[:, 2, 2])
+        rel_roll.append(rx)
+        rel_pitch.append(ry)
+        rel_yaw.append(rz)
 
     root_pos = seg_centers[:, root_seg_index]
-    root_quat = _quat_from_rot_matrix(frames[root_seg_index])
-    return root_pos, root_quat, torch.stack(rel_pitch, dim=1), torch.stack(rel_yaw, dim=1)
+    root_quat = _quat_from_rot_matrix(twisted[root_seg_index])
+    return (
+        root_pos,
+        root_quat,
+        torch.stack(rel_roll, dim=1),
+        torch.stack(rel_pitch, dim=1),
+        torch.stack(rel_yaw, dim=1),
+    )
 
 
 def sample_physics_scales(
@@ -140,31 +169,28 @@ def sample_physics_scales(
     return s_scale, f_scale
 
 
-def resolve_bending_dofs(
+def resolve_rotational_dofs(
     joint_names: list[str], num_segments: int
-) -> tuple[dict[int, int], dict[int, int]]:
-    """Map each inter-segment joint index ``k - 1`` to its PhysX ``rotY`` (pitch) and ``rotZ`` (yaw) DOF indices.
-
-    PhysX D6 joints with ``rotX`` locked typically expose ``:1`` (rotY) and ``:2`` (rotZ),
-    matching WireCraft; if a runtime compacts unlocked DOFs to two entries without ``:1``/``:2``,
-    fall back to the last two matching DOFs for the joint prefix.
-    """
+) -> tuple[dict[int, int], dict[int, int], dict[int, int]]:
+    """Map each inter-segment joint index ``k - 1`` to its PhysX ``:0`` (rotX), ``:1`` (rotY), ``:2`` (rotZ) DOFs."""
     name_to_idx = {name: idx for idx, name in enumerate(joint_names)}
+    roll_dofs: dict[int, int] = {}
     pitch_dofs: dict[int, int] = {}
     yaw_dofs: dict[int, int] = {}
     for k in range(1, num_segments):
         prefix = f"joint_seg_{k}_to_parent"
-        p_name = f"{prefix}:1"
-        y_name = f"{prefix}:2"
-        if p_name in name_to_idx and y_name in name_to_idx:
+        r_name, p_name, y_name = f"{prefix}:0", f"{prefix}:1", f"{prefix}:2"
+        if r_name in name_to_idx and p_name in name_to_idx and y_name in name_to_idx:
+            roll_dofs[k - 1] = name_to_idx[r_name]
             pitch_dofs[k - 1] = name_to_idx[p_name]
             yaw_dofs[k - 1] = name_to_idx[y_name]
             continue
         matches = [idx for idx, n in enumerate(joint_names) if n == prefix or n.startswith(f"{prefix}:")]
-        if len(matches) >= 2:
-            pitch_dofs[k - 1] = matches[-2]
-            yaw_dofs[k - 1] = matches[-1]
-    return pitch_dofs, yaw_dofs
+        if len(matches) >= 3:
+            roll_dofs[k - 1], pitch_dofs[k - 1], yaw_dofs[k - 1] = matches[-3], matches[-2], matches[-1]
+        elif len(matches) == 2:
+            pitch_dofs[k - 1], yaw_dofs[k - 1] = matches[0], matches[1]
+    return roll_dofs, pitch_dofs, yaw_dofs
 
 
 class ArticulationWire:
@@ -231,10 +257,15 @@ class ArticulationWire:
         root_body = int((self.wire.data.body_pos_w - self.wire.data.root_pos_w.unsqueeze(1)).norm(dim=-1)[0].argmin())
         self._root_seg_idx = self._seg_bodies.index(root_body) if root_body in self._seg_bodies else 0
 
-        # Resolve PhysX D6 bending DOFs (:1 = rotY pitch, :2 = rotZ yaw).
-        self._pitch_dofs, self._yaw_dofs = resolve_bending_dofs(list(self.wire.joint_names), count)
+        # Resolve PhysX D6 rotational DOFs (:0 = rotX roll, :1 = rotY pitch, :2 = rotZ yaw).
+        self._roll_dofs, self._pitch_dofs, self._yaw_dofs = resolve_rotational_dofs(list(self.wire.joint_names), count)
         self._base_stiffness = float(self.assembly_cfg.articulation.stiffness)
         self._base_materials = self.wire.root_physx_view.get_material_properties().clone()
+        start_prof = get_connector_profile(self.assembly_cfg.start_family)
+        end_prof = get_connector_profile(self.assembly_cfg.end_family)
+        embed = float(self.assembly_cfg.port_embed_depth)
+        self._start_anchor_x = start_prof.cable_anchor_x(min(embed, start_prof.housing_bounds[1] - start_prof.housing_bounds[0]))
+        self._end_anchor_x = end_prof.cable_anchor_x(min(embed, end_prof.housing_bounds[1] - end_prof.housing_bounds[0]))
 
     def state(self) -> WireState:
         data = self.wire.data
@@ -267,10 +298,14 @@ class ArticulationWire:
         s_scale, f_scale = sample_physics_scales(
             len(env_ids), True, var.stiffness_scale_range, var.friction_scale_range, device=self.env.device
         )
-        all_dofs = sorted(set(self._pitch_dofs.values()) | set(self._yaw_dofs.values()))
-        if all_dofs:
-            stiff = (self._base_stiffness * s_scale).unsqueeze(-1).expand(-1, len(all_dofs))
-            self.wire.write_joint_stiffness_to_sim(stiff, joint_ids=all_dofs, env_ids=env_ids)
+        bend_dofs = sorted(set(self._pitch_dofs.values()) | set(self._yaw_dofs.values()))
+        if bend_dofs:
+            stiff = (self._base_stiffness * s_scale).unsqueeze(-1).expand(-1, len(bend_dofs))
+            self.wire.write_joint_stiffness_to_sim(stiff, joint_ids=bend_dofs, env_ids=env_ids)
+        roll_dofs = sorted(self._roll_dofs.values())
+        if roll_dofs:
+            stiff_r = (0.5 * self._base_stiffness * s_scale).unsqueeze(-1).expand(-1, len(roll_dofs))
+            self.wire.write_joint_stiffness_to_sim(stiff_r, joint_ids=roll_dofs, env_ids=env_ids)
         env_ids_cpu = env_ids.cpu()
         mats = self.wire.root_physx_view.get_material_properties()
         f_cpu = f_scale.cpu().view(-1, 1, 1)
@@ -285,23 +320,31 @@ class ArticulationWire:
         active_port_pos: torch.Tensor,
         active_port_quat: torch.Tensor,
     ) -> None:
-        """Initialize the articulated cable along a 3D PluggedCableArc with exact joint angles."""
+        """Initialize the articulated cable along an exact-segment 3D PluggedCableArc."""
         n = len(env_ids)
         device = self.env.device
-        rear = torch.tensor([[-0.018, 0.0, 0.0]], device=device).expand(n, 3)
-        far_exit = far_port_pos + quat_apply(far_port_quat, rear)
-        act_exit = active_port_pos + quat_apply(active_port_quat, rear)
-        exit_dir = quat_apply(far_port_quat, torch.tensor([[-1.0, 0.0, 0.0]], device=device).expand(n, 3))
+        far_rear = torch.tensor([[self._start_anchor_x, 0.0, 0.0]], device=device).expand(n, 3)
+        act_rear = torch.tensor([[self._end_anchor_x, 0.0, 0.0]], device=device).expand(n, 3)
+        far_exit = far_port_pos + quat_apply(far_port_quat, far_rear)
+        act_exit = active_port_pos + quat_apply(active_port_quat, act_rear)
+        neg_x = torch.tensor([[-1.0, 0.0, 0.0]], device=device).expand(n, 3)
+        exit_far = quat_apply(far_port_quat, neg_x)
+        exit_act = quat_apply(active_port_quat, neg_x)
         arc = PluggedCableArc.solve(
             far_exit,
             act_exit,
             cable_length=self.assembly_cfg.articulation.total_length,
             num_points=self.assembly_cfg.articulation.num_segments + 1,
-            exit_normal=exit_dir,
+            exit_normal=exit_far,
+            exit_normal_active=exit_act,
             lateral_bow=self.cfg.lateral_bow,
+            enforce_exact_segments=True,
         )
-        root_pos, root_quat, rel_pitch, rel_yaw = compute_chain_arc_joint_state(
-            arc.points, root_seg_index=self._root_seg_idx
+        root_pos, root_quat, rel_roll, rel_pitch, rel_yaw = compute_chain_arc_joint_state(
+            arc.points,
+            far_port_quat=far_port_quat,
+            active_port_quat=active_port_quat,
+            root_seg_index=self._root_seg_idx,
         )
         root = torch.zeros(n, 13, device=device)
         root[:, :3] = root_pos
@@ -309,6 +352,8 @@ class ArticulationWire:
         self.wire.write_root_state_to_sim(root, env_ids=env_ids)
 
         joint_pos = self.wire.data.default_joint_pos[env_ids].clone()
+        for k, dof in self._roll_dofs.items():
+            joint_pos[:, dof] = rel_roll[:, k]
         for k, dof in self._pitch_dofs.items():
             joint_pos[:, dof] = rel_pitch[:, k]
         for k, dof in self._yaw_dofs.items():

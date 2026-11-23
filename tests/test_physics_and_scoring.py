@@ -21,16 +21,19 @@ from idb_tasks.direct.idb.single_arm.common.scoring import (
     score_sc_fiber_maintenance,
     score_sc_port_swap,
 )
+from idb_assets.board_spec import load_board_spec
 from idb_tasks.direct.idb.wire_base.articulation import (
+    _quat_from_rot_matrix,
     compute_chain_arc_joint_state,
-    resolve_bending_dofs,
+    resolve_rotational_dofs,
     sample_physics_scales,
 )
 from idb_tasks.direct.idb.wire_base.connectors import ConnectorGeometry
 from idb_tasks.direct.idb.wire_base.deformable import map_deformable_nodes_to_arc
 from idb_tasks.direct.idb.wire_base.math_utils import quat_apply, quat_from_angle_axis
 from idb_tasks.direct.idb.wire_base.wire_state import PluggedCableArc, ferrule_positions
-from idb_tasks.sim.spawners.ports.connector_profiles import connector_families
+from idb_tasks.sim.spawners.ports.connector_profiles import connector_families, get_connector_profile
+from idb_tasks.sim.spawners.wires.wire_presets import get_cable_preset
 
 
 @pytest.mark.parametrize("family", connector_families())
@@ -244,19 +247,21 @@ def test_official_idb_rubric_point_totals_and_failure_gates():
     assert int(r4_dmg.total_score[0]) == 17 and not bool(r4_dmg.passed[0])
 
 
-def _rot_y_z(pitch: torch.Tensor, yaw: torch.Tensor) -> torch.Tensor:
-    """Intrinsic R_y(pitch) @ R_z(yaw) rotation matrix matching D6 rotX=0 joint kinematics."""
+def _rot_x_y_z(roll: torch.Tensor, pitch: torch.Tensor, yaw: torch.Tensor) -> torch.Tensor:
+    """Intrinsic R_x(roll) @ R_y(pitch) @ R_z(yaw) matching PhysX 3-DOF spherical D6 kinematics."""
+    cr, sr = torch.cos(roll), torch.sin(roll)
     cp, sp = torch.cos(pitch), torch.sin(pitch)
     cy, sy = torch.cos(yaw), torch.sin(yaw)
     r = torch.zeros(*pitch.shape, 3, 3, dtype=pitch.dtype)
     r[..., 0, 0] = cp * cy
     r[..., 0, 1] = -cp * sy
     r[..., 0, 2] = sp
-    r[..., 1, 0] = sy
-    r[..., 1, 1] = cy
-    r[..., 2, 0] = -sp * cy
-    r[..., 2, 1] = sp * sy
-    r[..., 2, 2] = cp
+    r[..., 1, 0] = sr * sp * cy + cr * sy
+    r[..., 1, 1] = -sr * sp * sy + cr * cy
+    r[..., 1, 2] = -sr * cp
+    r[..., 2, 0] = -cr * sp * cy + sr * sy
+    r[..., 2, 1] = cr * sp * sy + sr * cy
+    r[..., 2, 2] = cr * cp
     return r
 
 
@@ -275,52 +280,97 @@ def _quat_to_rot_matrix(q: torch.Tensor) -> torch.Tensor:
     return r
 
 
-@pytest.mark.parametrize("root_idx", [0, 12, 23])
-def test_articulation_chain_fk_matches_plugged_arc_for_any_root_segment(root_idx: int):
-    far_pos = torch.tensor([[0.0, 0.024, 0.151], [0.0, -0.042, 0.151]])
-    act_pos = torch.tensor([[0.0, 0.024, 0.240], [0.0, -0.008, 0.240]])
-    num_segs = 24
-    arc = PluggedCableArc.solve(far_pos, act_pos, cable_length=0.30, num_points=num_segs + 1)
-    root_pos, root_quat, rel_pitch, rel_yaw = compute_chain_arc_joint_state(arc.points, root_seg_index=root_idx)
+@pytest.mark.parametrize(
+    "far_pid,act_pid,preset_name",
+    [
+        ("B1", "A1", "cat6_ethernet"),
+        ("B5", "A5", "os2_fiber_simplex"),
+        ("B9", "A9", "os2_fiber_duplex"),
+        ("C1", "C3", "cat6_ethernet"),
+        ("C9", "C11", "os2_fiber_duplex"),
+    ],
+)
+@pytest.mark.parametrize("root_frac", [0.0, 0.5, 1.0])
+def test_articulation_chain_fk_matches_plugged_ports_and_seating(
+    far_pid: str, act_pid: str, preset_name: str, root_frac: float
+):
+    spec = load_board_spec()
+    preset = get_cable_preset(preset_name)
+    f_port, a_port = spec.port(far_pid), spec.port(act_pid)
+    f_prof, a_prof = get_connector_profile(f_port.family), get_connector_profile(a_port.family)
+    f_geom, a_geom = ConnectorGeometry.from_family(f_port.family), ConnectorGeometry.from_family(a_port.family)
 
-    seg_lens = (arc.points[:, 1:] - arc.points[:, :-1]).norm(dim=-1)  # (N, S)
+    f_sock_p, f_sock_q = torch.tensor([f_port.mouth_pos]), torch.tensor([f_port.socket_quat])
+    a_sock_p, a_sock_q = torch.tensor([a_port.mouth_pos]), torch.tensor([a_port.socket_quat])
+    f_seat_p = f_sock_p + quat_apply(
+        f_sock_q, torch.tensor([[f_geom.socket_mouth_x + f_geom.insert_seat_depth + 0.001 - f_geom.tip_length, 0.0, 0.0]])
+    )
+    a_seat_p = a_sock_p + quat_apply(
+        a_sock_q, torch.tensor([[a_geom.socket_mouth_x + a_geom.insert_seat_depth + 0.001 - a_geom.tip_length, 0.0, 0.0]])
+    )
+
+    f_anchor = f_prof.cable_anchor_x(min(0.012, f_prof.housing_bounds[1] - f_prof.housing_bounds[0]))
+    a_anchor = a_prof.cable_anchor_x(min(0.012, a_prof.housing_bounds[1] - a_prof.housing_bounds[0]))
+    f_exit = f_seat_p + quat_apply(f_sock_q, torch.tensor([[f_anchor, 0.0, 0.0]]))
+    a_exit = a_seat_p + quat_apply(a_sock_q, torch.tensor([[a_anchor, 0.0, 0.0]]))
+    exit_f = quat_apply(f_sock_q, torch.tensor([[-1.0, 0.0, 0.0]]))
+    exit_a = quat_apply(a_sock_q, torch.tensor([[-1.0, 0.0, 0.0]]))
+
+    num_segs = preset.num_segments
+    seg_len = preset.length / num_segs
+    root_idx = int(round(root_frac * (num_segs - 1)))
+    arc = PluggedCableArc.solve(
+        f_exit, a_exit, cable_length=preset.length, num_points=num_segs + 1, exit_normal=exit_f, exit_normal_active=exit_a
+    )
+    root_pos, root_quat, rel_roll, rel_pitch, rel_yaw = compute_chain_arc_joint_state(
+        arc.points, far_port_quat=f_sock_q, active_port_quat=a_sock_q, root_seg_index=root_idx
+    )
+
+    # Walk exact USD FixedJoint + fixed-seg_len chain FK both forward and backward from root_idx.
     frames: list[torch.Tensor | None] = [None] * num_segs
     centers: list[torch.Tensor | None] = [None] * num_segs
     frames[root_idx] = _quat_to_rot_matrix(root_quat)
     centers[root_idx] = root_pos
-
-    # Walk forward from root_idx -> num_segs - 1
     for k in range(root_idx, num_segs - 1):
-        r_rel = _rot_y_z(rel_pitch[:, k], rel_yaw[:, k])
+        r_rel = _rot_x_y_z(rel_roll[:, k], rel_pitch[:, k], rel_yaw[:, k])
         frames[k + 1] = torch.bmm(frames[k], r_rel)
-        x_k = frames[k][:, :, 0]
-        x_next = frames[k + 1][:, :, 0]
-        centers[k + 1] = centers[k] + 0.5 * seg_lens[:, k : k + 1] * x_k + 0.5 * seg_lens[:, k + 1 : k + 2] * x_next
-
-    # Walk backward from root_idx -> 0
+        centers[k + 1] = centers[k] + 0.5 * seg_len * frames[k][:, :, 0] + 0.5 * seg_len * frames[k + 1][:, :, 0]
     for k in range(root_idx - 1, -1, -1):
-        r_rel = _rot_y_z(rel_pitch[:, k], rel_yaw[:, k])
+        r_rel = _rot_x_y_z(rel_roll[:, k], rel_pitch[:, k], rel_yaw[:, k])
         frames[k] = torch.bmm(frames[k + 1], r_rel.transpose(1, 2))
-        x_k = frames[k][:, :, 0]
-        x_next = frames[k + 1][:, :, 0]
-        centers[k] = centers[k + 1] - 0.5 * seg_lens[:, k + 1 : k + 2] * x_next - 0.5 * seg_lens[:, k : k + 1] * x_k
+        centers[k] = centers[k + 1] - 0.5 * seg_len * frames[k + 1][:, :, 0] - 0.5 * seg_len * frames[k][:, :, 0]
 
-    # Verify reconstructed start/end endpoints and every segment midpoint match the solved arc!
-    start_pt = centers[0] - 0.5 * seg_lens[:, 0:1] * frames[0][:, :, 0]
-    end_pt = centers[-1] + 0.5 * seg_lens[:, -1:] * frames[-1][:, :, 0]
-    assert float((start_pt - arc.points[:, 0]).norm(dim=-1).max()) < 1e-4
-    assert float((end_pt - arc.points[:, -1]).norm(dim=-1).max()) < 1e-4
+    # Reconstruct exact start_port (FixedJoint localRot0=R_z(pi)) and end_port poses.
+    rz_pi = torch.diag(torch.tensor([-1.0, -1.0, 1.0])).unsqueeze(0)
+    r_start = torch.bmm(frames[0], rz_pi)
+    c_start_j = centers[0] - 0.5 * seg_len * frames[0][:, :, 0]
+    p_start = c_start_j - torch.bmm(r_start, torch.tensor([[[f_anchor], [0.0], [0.0]]])).squeeze(-1)
 
-    # Verify PhysX D6 DOF resolver prefers :1 (rotY) and :2 (rotZ) even when :0 exists.
+    r_end = frames[-1]
+    c_end_j = centers[-1] + 0.5 * seg_len * frames[-1][:, :, 0]
+    p_end = c_end_j - torch.bmm(r_end, torch.tensor([[[a_anchor], [0.0], [0.0]]])).squeeze(-1)
+
+    assert float((p_start - f_seat_p).norm()) < 5e-4
+    assert float((p_end - a_seat_p).norm()) < 5e-4
+
+    seat_f = evaluate_connector_seating(p_start, _quat_from_rot_matrix(r_start), f_sock_p, f_sock_q, f_geom)
+    seat_a = evaluate_connector_seating(p_end, _quat_from_rot_matrix(r_end), a_sock_p, a_sock_q, a_geom)
+    assert bool(seat_f.is_seated[0]) and float(seat_f.roll_cos[0]) > 0.999
+    assert bool(seat_a.is_seated[0]) and float(seat_a.roll_cos[0]) > 0.999
+
+    # Verify smooth curvature (> min_bend_radius) and joint angles strictly below 0.85 rad limit.
+    bend = compute_cable_bend_radius(arc.points, min_bend_radius=preset.min_bend_radius)
+    assert not bool(bend.is_kinked[0]), f"{far_pid}->{act_pid} kinked: R_min={float(bend.min_radius_m[0]):.4f} m"
+    max_angle = float(torch.stack((rel_roll.abs(), rel_pitch.abs(), rel_yaw.abs())).max())
+    assert max_angle < 0.85, f"{far_pid}->{act_pid} exceeded joint limit: {max_angle:.3f} rad"
+
+    # Verify 3-DOF PhysX joint resolver maps :0=roll, :1=pitch, :2=yaw.
     names_3dof = [f"joint_seg_{k}_to_parent:{d}" for k in range(1, 5) for d in (0, 1, 2)]
-    p3, y3 = resolve_bending_dofs(names_3dof, num_segments=5)
-    assert p3[0] == 1 and y3[0] == 2
-    names_2dof = [f"joint_seg_{k}_to_parent:{d}" for k in range(1, 5) for d in (1, 2)]
-    p2, y2 = resolve_bending_dofs(names_2dof, num_segments=5)
-    assert p2[0] == 0 and y2[0] == 1
+    r_d, p_d, y_d = resolve_rotational_dofs(names_3dof, num_segments=5)
+    assert r_d[0] == 0 and p_d[0] == 1 and y_d[0] == 2
 
 
-def test_deformable_nodal_arc_mapping_strips_spawn_offset_and_handles_vertical_tangents():
+def test_deformable_nodal_arc_mapping_strips_spawn_offset_and_stays_smooth_across_vertical():
     # Spawn a rest cylinder far away at (0.35, -0.25, 1.76) with radius 2 mm.
     radius = 0.002
     rings = 31
@@ -333,9 +383,11 @@ def test_deformable_nodal_arc_mapping_strips_spawn_offset_and_handles_vertical_t
             verts.append([float(x), -0.25 + radius * math.cos(float(a)), 1.76 + radius * math.sin(float(a))])
     default_pos = torch.tensor(verts, dtype=torch.float32).unsqueeze(0).repeat(2, 1, 1)
 
-    # Construct a vertical-going arc so tangents pass right through [0, 0, +1].
+    # Construct an oblique 3D arc (with non-zero Y tangent) crossing |tans_z| == 0.90 to catch frame flips.
     t = torch.linspace(0.0, 1.0, 65)
-    pts = torch.stack((-0.05 * torch.sin(math.pi * t), torch.zeros_like(t), 0.15 + 0.30 * t), dim=-1).unsqueeze(0).repeat(2, 1, 1)
+    pts = torch.stack(
+        (-0.05 * torch.sin(math.pi * t), 0.04 * torch.sin(math.pi * t), 0.15 + 0.30 * t), dim=-1
+    ).unsqueeze(0).repeat(2, 1, 1)
     tans = torch.zeros_like(pts)
     tans[:, 1:-1] = pts[:, 2:] - pts[:, :-2]
     tans[:, 0] = pts[:, 1] - pts[:, 0]
@@ -344,7 +396,6 @@ def test_deformable_nodal_arc_mapping_strips_spawn_offset_and_handles_vertical_t
 
     mapped = map_deformable_nodes_to_arc(default_pos, pts, tans)
     assert torch.isfinite(mapped).all()
-    # Every mapped vertex must lie within radius + epsilon of its arc centerline point (no 1.76 m Z offset!).
     u_idx = torch.linspace(0.0, 64.0, rings).repeat_interleave(sides)
     lo = u_idx.clamp(0.0, 63.999).long()
     frac = (u_idx - lo.float()).view(1, -1, 1)
@@ -352,6 +403,12 @@ def test_deformable_nodal_arc_mapping_strips_spawn_offset_and_handles_vertical_t
     radial_err = (mapped - expected_centers).norm(dim=-1)
     assert float(radial_err.max()) <= radius + 1e-4
     assert float(radial_err.min()) >= radius - 1e-4
+
+    # Verify cross-section orientation never jumps discontinuously between adjacent rings!
+    ring_v0 = mapped[0].view(rings, sides, 3)[:, 0] - expected_centers[0].view(rings, sides, 3)[:, 0]
+    ring_v0 = ring_v0 / ring_v0.norm(dim=-1, keepdim=True)
+    dots = (ring_v0[:-1] * ring_v0[1:]).sum(dim=-1)
+    assert float(dots.min()) > 0.95, f"Discontinuous cross-section jump detected (min dot={float(dots.min()):.3f})"
 
 
 def test_physics_randomization_scales_stay_within_bounds():

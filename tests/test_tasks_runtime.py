@@ -199,21 +199,45 @@ def test_fiber_maintenance_tasks_require_polishing_before_reinsertion(task_id: s
     assert not bool(rubric.passed[1]), "Skipping figure-eight polishing must NOT pass maintenance task"
 
 
-def test_refresh_after_reset_prevents_step0_latch_rip_damage():
+def test_reset_then_get_observations_does_not_fire_step0_latch_update():
+    from idb_tasks.direct.idb.single_arm.common.env import SingleArmIDBEnv
+
     env, task, set_connector, (_, _, act_pos, act_quat) = _build_task_harness(
         "IDB-Franka-Articulation-EthernetPortSwap-v0", num_envs=2
     )
-    # Simulate a transient wrench spike on reset before the first physics step.
+    # Wire SingleArmIDBEnv methods onto the lightweight env harness to verify exact DirectRLEnv.reset() ordering:
+    # _reset_idx() -> sim.forward() -> _get_observations() must NOT advance task.update() / latch.update().
+    env.task = task
+    env.tiled_cameras = {}
+    env._needs_task_update = False
+    env._just_reset_ids = torch.tensor([0, 1])
+    env.arm.update = lambda: None
+    env.wire_backend = SimpleNamespace(state=lambda: env.wire_state)
+    env._refresh_kinematics = lambda: SingleArmIDBEnv._refresh_kinematics(env)
+    env._update_state = lambda: SingleArmIDBEnv._update_state(env)
+
+    # Simulate a transient wrench spike + off-port settle jitter during reset before step 1.
     env.arm.wrench[:, 0] = 25.0
     all_ids = torch.tensor([0, 1])
     task.reset(all_ids, nominal_neighbors=None)
-    set_connector(act_pos, act_quat)
+    jittered = act_pos.clone()
+    jittered[:, 0] -= 0.015  # transiently unseated on step 0
+    set_connector(jittered, act_quat)
     task.refresh_after_reset(all_ids)
-    assert not bool(task.latch.damaged.any())
+    env._needs_task_update = False
+    env._just_reset_ids = all_ids.clone()
+
+    obs_dict = SingleArmIDBEnv._get_observations(env)
+    assert not bool(task.latch.damaged.any()), "DirectRLEnv._get_observations() after reset must not trigger latch rip damage"
     assert not bool(task.removed_from_source.any())
-    assert task.target_seating is not None
-    obs = task.observations()
-    assert obs.shape == (2, env.cfg.observation_space) and torch.isfinite(obs).all()
+    assert obs_dict["policy"].shape == (2, env.cfg.observation_space)
+    assert torch.isfinite(obs_dict["policy"]).all()
+
+    # Once a physics step runs (_needs_task_update=True), _update_state advances task.update() cleanly.
+    env._needs_task_update = True
+    SingleArmIDBEnv._update_state(env)
+    assert env._needs_task_update is False
+    assert bool(task.latch.damaged.all())
 
 
 def test_board_reset_syncs_kinematic_physx_bodies_when_randomized():

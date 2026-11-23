@@ -16,10 +16,10 @@ import sys
 from typing import Any
 
 HAS_ISAACLAB_PKG: bool = importlib.util.find_spec("isaaclab") is not None
-_KIT_ACTIVE: bool = (
-    "omni" in sys.modules
-    or "carb" in sys.modules
-    or importlib.util.find_spec("omni") is not None
+# Kit is only active once SimulationApp has initialized Omniverse modules in sys.modules
+# (find_spec("omni") can return True before SimulationApp boots on pip-installed Isaac Sim).
+_KIT_ACTIVE: bool = any(
+    mod in sys.modules for mod in ("omni.kit.app", "omni.isaac.core", "isaacsim.core.api", "carb")
 )
 HAS_ISAACLAB: bool = HAS_ISAACLAB_PKG and _KIT_ACTIVE
 HAS_ISAACSIM: bool = importlib.util.find_spec("isaacsim") is not None and _KIT_ACTIVE

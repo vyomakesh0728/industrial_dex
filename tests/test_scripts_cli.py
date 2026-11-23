@@ -107,3 +107,8 @@ def test_run_py_video_preserves_side_camera_with_sensor_config_and_defers_runtim
     assert proc.returncode == 0, proc.stderr
     res = json.loads((out_dir / "result.json").read_text(encoding="utf-8"))
     assert set(res["cameras"]) == {"side", "wrist_d405_rgb", "scene_d435i_rgb"}
+
+    # 3. Verify --sensor-config also sets enable_cameras=True before AppLauncher boots.
+    run_src = (REPO_ROOT / "scripts/idb/run.py").read_text(encoding="utf-8")
+    assert "args_cli.sensor_config is not None" in run_src
+    assert "sys.argv = [sys.argv[0]]" in run_src

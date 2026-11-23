@@ -39,8 +39,8 @@ POPULATION_CATALOG: tuple[tuple[str, str, str], ...] = (
     ("B2", "A2", "cat6_ethernet"),
     ("B3", "A3", "cat6_ethernet"),
     ("B4", "A4", "cat6_ethernet"),
-    ("C1", "C2", "cat6_ethernet"),
-    ("C3", "C4", "cat6_ethernet"),
+    ("C1", "C3", "cat6_ethernet"),
+    ("C2", "C4", "cat6_ethernet"),
     ("B5", "A5", "os2_fiber_simplex"),
     ("B6", "A6", "os2_fiber_simplex"),
     ("B7", "A7", "os2_fiber_simplex"),
@@ -49,8 +49,8 @@ POPULATION_CATALOG: tuple[tuple[str, str, str], ...] = (
     ("B10", "A10", "os2_fiber_duplex"),
     ("B11", "A11", "os2_fiber_duplex"),
     ("B12", "A12", "os2_fiber_duplex"),
-    ("C9", "C10", "os2_fiber_duplex"),
-    ("C11", "C12", "os2_fiber_duplex"),
+    ("C9", "C11", "os2_fiber_duplex"),
+    ("C10", "C12", "os2_fiber_duplex"),
 )
 
 

@@ -184,7 +184,8 @@ class IDBBoardRuntime:
 
     def seated_connector_pose(self, port_id: str, geometry: ConnectorGeometry) -> tuple[torch.Tensor, torch.Tensor]:
         sock_pos, sock_quat = self.port_world_pose(port_id)
-        offset_x = geometry.socket_mouth_x + geometry.insert_seat_depth - geometry.tip_length
+        # Seat 1.0 mm past insert_seat_depth (leaving >= 2.5 mm clearance to socket backstop).
+        offset_x = geometry.socket_mouth_x + geometry.insert_seat_depth + 0.001 - geometry.tip_length
         offset = torch.zeros_like(sock_pos)
         offset[:, 0] = offset_x
         return sock_pos + quat_apply(sock_quat, offset), sock_quat

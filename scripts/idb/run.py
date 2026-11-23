@@ -225,7 +225,9 @@ def main() -> int:
     parser = build_parser(with_app_launcher=has_isaaclab_pkg)
     args_cli, extra_tokens = parser.parse_known_args()
 
-    if args_cli.video:
+    if args_cli.video or args_cli.sensor_config is not None or any(
+        tok.lower() == "env.sensors.enable_cameras=true" for tok in extra_tokens
+    ):
         args_cli.enable_cameras = True
 
     # Offline branches (--list / --dry-run) run without booting Omniverse Kit.
@@ -266,6 +268,8 @@ def main() -> int:
         )
     from isaaclab.app import AppLauncher  # type: ignore[import-not-found]
 
+    # Strip env.* override tokens before SimulationApp reads sys.argv (matching WireCraft run.py).
+    sys.argv = [sys.argv[0]]
     simulation_app = AppLauncher(args_cli).app
 
     rt = _import_idb_runtime()

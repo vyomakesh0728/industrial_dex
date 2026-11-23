@@ -85,11 +85,13 @@ class SingleArmIDBEnv(DirectRLEnv):  # type: ignore[misc]
         light = sim_utils.DomeLightCfg(intensity=1500.0, color=(0.85, 0.85, 0.85))
         light.func("/World/Light", light)
         self._light_prim_path = "/World/Light"
+        self._needs_task_update = False
+        self._just_reset_ids: torch.Tensor | None = None
         self.tiled_cameras = {}
         for name, cam_cfg in self.cfg.camera_cfgs.items():
             self.tiled_cameras[name] = self.scene.sensors[name] = TiledCamera(cam_cfg)
 
-    def _update_state(self) -> None:
+    def _refresh_kinematics(self) -> None:
         self.arm.update()
         self.wire_state = self.wire_backend.state()
         origins = self.scene.env_origins
@@ -97,7 +99,11 @@ class SingleArmIDBEnv(DirectRLEnv):  # type: ignore[misc]
         self.ee_local_quat = self.arm.ee_quat
         self.port_local_pos = self.wire_state.insertion_end_pos - origins
         self.tip_local_pos = self.wire_state.tip_pos - origins
+
+    def _update_state(self) -> None:
+        self._refresh_kinematics()
         self.task.update()
+        self._needs_task_update = False
 
     def _fault_mask(self) -> torch.Tensor:
         joints_ok = self.arm.joint_speed() < self.cfg.fault_joint_speed
@@ -107,6 +113,7 @@ class SingleArmIDBEnv(DirectRLEnv):  # type: ignore[misc]
     def _pre_physics_step(self, actions: torch.Tensor) -> None:
         self.actions = actions.clone().clamp(-1.0, 1.0)
         self.arm.latch_control_state()
+        self._needs_task_update = True
 
     def _apply_action(self) -> None:
         self.wire_backend.hold_far_end()
@@ -114,7 +121,13 @@ class SingleArmIDBEnv(DirectRLEnv):  # type: ignore[misc]
         self.arm.apply_action(self.actions, self.cfg.action_scale, self.cfg.fix_ee_orient, self.cfg.control_mode)
 
     def _get_observations(self) -> dict[str, torch.Tensor]:
-        self._update_state()
+        if self._needs_task_update:
+            self._update_state()
+        else:
+            self._refresh_kinematics()
+            if self._just_reset_ids is not None:
+                self.task.refresh_after_reset(self._just_reset_ids)
+                self._just_reset_ids = None
         obs: dict[str, torch.Tensor] = {
             "policy": torch.nan_to_num(self.task.observations(), nan=0.0, posinf=0.0, neginf=0.0)
         }
@@ -188,17 +201,14 @@ class SingleArmIDBEnv(DirectRLEnv):  # type: ignore[misc]
     def _reset_idx(self, env_ids: torch.Tensor) -> None:
         super()._reset_idx(env_ids)
         self.arm.reset(env_ids)
-        self._randomize_dome_light()
+        if len(env_ids) == self.num_envs:
+            self._randomize_dome_light()
         nominal_neighbors = self.board.reset(env_ids)
         far_pos, far_quat, act_pos, act_quat = self.task.reset(env_ids, nominal_neighbors)
         self.wire_backend.reset_plugged(env_ids, far_pos, far_quat, act_pos, act_quat)
         self.scene.update(dt=0.0)
-        self.arm.update()
-        self.wire_state = self.wire_backend.state()
-        origins = self.scene.env_origins
-        self.ee_local_pos = self.arm.ee_pos - origins
-        self.ee_local_quat = self.arm.ee_quat
-        self.port_local_pos = self.wire_state.insertion_end_pos - origins
-        self.tip_local_pos = self.wire_state.tip_pos - origins
-        # Refresh target/source seating geometry without triggering step-0 latch rip damage.
+        self._refresh_kinematics()
+        # Refresh seating/bend geometry without advancing latch or fault state on step 0.
         self.task.refresh_after_reset(env_ids)
+        self._needs_task_update = False
+        self._just_reset_ids = env_ids.clone()

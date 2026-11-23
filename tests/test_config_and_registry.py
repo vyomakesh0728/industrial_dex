@@ -150,3 +150,30 @@ def test_ur5_depth_camera_defines_valid_spawn_and_clipping_range():
     depth_block = src.split('"wrist_d405_depth": TiledCameraCfg(', 1)[1]
     assert "PinholeCameraCfg" in depth_block and "clipping_range=" in depth_block
     assert "spawn=None" not in depth_block
+
+
+def test_population_catalog_partitions_all_32_ports_and_compat_does_not_probe_omni_spec():
+    import ast
+    from pathlib import Path
+    from idb_tasks.direct.idb.single_arm.common.env_cfg import POPULATION_CATALOG
+
+    seen: list[str] = []
+    for far_p, act_p, _ in POPULATION_CATALOG:
+        seen.extend([far_p, act_p])
+    assert len(seen) == 32 and len(set(seen)) == 32
+
+    compat_src = (
+        Path(__file__).resolve().parents[1]
+        / "source/idb_tasks/idb_tasks/utils/isaac_compat.py"
+    ).read_text(encoding="utf-8")
+    tree = ast.parse(compat_src)
+    find_spec_args = [
+        node.args[0].value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "find_spec"
+        and node.args
+        and isinstance(node.args[0], ast.Constant)
+    ]
+    assert "omni" not in find_spec_args

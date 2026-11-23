@@ -41,18 +41,18 @@ def _apply_d6_bending_joint(
     joint.CreateLocalPos1Attr().Set(Gf.Vec3f(*pos1))
     joint.CreateLocalRot1Attr().Set(Gf.Quatf(1.0))
 
-    # Lock all 3 translational DOFs and axial torsion (rotX), matching WireCraft's bending-only wire chain.
-    for axis in ("transX", "transY", "transZ", "rotX"):
+    # Lock all 3 translational DOFs; drive bending (rotY, rotZ) and compliant torsion (rotX)
+    # so 30 cm datacenter patch cords can bridge ports with distinct latch/key roll orientations.
+    for axis in ("transX", "transY", "transZ"):
         lim = UsdPhysics.LimitAPI.Apply(joint.GetPrim(), axis)
         lim.CreateLowAttr().Set(1.0)
         lim.CreateHighAttr().Set(-1.0)
 
-    # Angular bending drives around Y and Z.
-    for axis in ("rotY", "rotZ"):
+    for axis, stiff_scale in (("rotX", 0.5), ("rotY", 1.0), ("rotZ", 1.0)):
         drive = UsdPhysics.DriveAPI.Apply(joint.GetPrim(), axis)
         drive.CreateTypeAttr().Set("force")
         drive.CreateTargetPositionAttr().Set(0.0)
-        drive.CreateStiffnessAttr().Set(float(stiffness))
+        drive.CreateStiffnessAttr().Set(float(stiffness) * stiff_scale)
         drive.CreateDampingAttr().Set(float(damping))
         if joint_limit_rad is not None:
             lim = UsdPhysics.LimitAPI.Apply(joint.GetPrim(), axis)

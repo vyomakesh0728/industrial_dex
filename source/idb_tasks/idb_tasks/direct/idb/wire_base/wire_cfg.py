@@ -33,7 +33,7 @@ class WireSceneCfg:
     num_segments: int = 16
     stiffness: float = 0.14
     damping: float = 0.004
-    joint_limit: float = 0.65
+    joint_limit: float = 0.85
     density: float = 900.0
     solver_position_iterations: int = 64
     solver_velocity_iterations: int = 4
