@@ -104,6 +104,7 @@ class SingleArmIDBEnv(DirectRLEnv):  # type: ignore[misc]
         self._refresh_kinematics()
         self.task.update()
         self._needs_task_update = False
+        self._just_reset_ids = None
 
     def _fault_mask(self) -> torch.Tensor:
         joints_ok = self.arm.joint_speed() < self.cfg.fault_joint_speed

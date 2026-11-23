@@ -16,14 +16,30 @@ import sys
 from typing import Any
 
 HAS_ISAACLAB_PKG: bool = importlib.util.find_spec("isaaclab") is not None
-# Kit is only active once SimulationApp has initialized Omniverse modules in sys.modules
-# (find_spec("omni") can return True before SimulationApp boots on pip-installed Isaac Sim).
-_KIT_ACTIVE: bool = any(
-    mod in sys.modules for mod in ("omni.kit.app", "omni.isaac.core", "isaacsim.core.api", "carb")
-)
+
+
+def _is_kit_running() -> bool:
+    """Return True only after SimulationApp has booted Omniverse Kit runtime modules."""
+    if "omni.client" in sys.modules or "omni.physx" in sys.modules or "isaacsim.core.api" in sys.modules:
+        return True
+    if "omni.kit.app" in sys.modules:
+        try:
+            import omni.kit.app  # type: ignore[import-not-found]
+
+            app = omni.kit.app.get_app_interface()
+            return bool(app is not None and app.is_running())
+        except Exception:
+            return False
+    return False
+
+
+_KIT_ACTIVE: bool = _is_kit_running()
 HAS_ISAACLAB: bool = HAS_ISAACLAB_PKG and _KIT_ACTIVE
 HAS_ISAACSIM: bool = importlib.util.find_spec("isaacsim") is not None and _KIT_ACTIVE
-HAS_PHYSX_SCHEMA: bool = importlib.util.find_spec("pxr.PhysxSchema") is not None
+HAS_PHYSX_SCHEMA: bool = (
+    importlib.util.find_spec("pxr") is not None
+    and importlib.util.find_spec("pxr.PhysxSchema") is not None
+)
 
 
 def _to_dict_recursive(obj: Any) -> Any:

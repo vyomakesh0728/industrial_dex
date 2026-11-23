@@ -247,22 +247,24 @@ def test_official_idb_rubric_point_totals_and_failure_gates():
     assert int(r4_dmg.total_score[0]) == 17 and not bool(r4_dmg.passed[0])
 
 
-def _rot_x_y_z(roll: torch.Tensor, pitch: torch.Tensor, yaw: torch.Tensor) -> torch.Tensor:
-    """Intrinsic R_x(roll) @ R_y(pitch) @ R_z(yaw) matching PhysX 3-DOF spherical D6 kinematics."""
-    cr, sr = torch.cos(roll), torch.sin(roll)
-    cp, sp = torch.cos(pitch), torch.sin(pitch)
-    cy, sy = torch.cos(yaw), torch.sin(yaw)
-    r = torch.zeros(*pitch.shape, 3, 3, dtype=pitch.dtype)
-    r[..., 0, 0] = cp * cy
-    r[..., 0, 1] = -cp * sy
-    r[..., 0, 2] = sp
-    r[..., 1, 0] = sr * sp * cy + cr * sy
-    r[..., 1, 1] = -sr * sp * sy + cr * cy
-    r[..., 1, 2] = -sr * cp
-    r[..., 2, 0] = -cr * sp * cy + sr * sy
-    r[..., 2, 1] = cr * sp * sy + sr * cy
-    r[..., 2, 2] = cr * cp
-    return r
+def _exp_so3(roll: torch.Tensor, pitch: torch.Tensor, yaw: torch.Tensor) -> torch.Tensor:
+    """SO(3) exponential map exp([rx, ry, rz]) matching PhysX 5 3-DOF spherical D6 kinematics."""
+    v = torch.stack((roll, pitch, yaw), dim=-1)
+    theta = v.norm(dim=-1, keepdim=True)
+    axis = v / theta.clamp_min(1e-9)
+    kx, ky, kz = axis.unbind(-1)
+    zeros = torch.zeros_like(kx)
+    k_mat = torch.stack(
+        (
+            torch.stack((zeros, -kz, ky), dim=-1),
+            torch.stack((kz, zeros, -kx), dim=-1),
+            torch.stack((-ky, kx, zeros), dim=-1),
+        ),
+        dim=-2,
+    )
+    eye = torch.eye(3, dtype=v.dtype).expand_as(k_mat)
+    th = theta.unsqueeze(-1)
+    return eye + torch.sin(th) * k_mat + (1.0 - torch.cos(th)) * torch.matmul(k_mat, k_mat)
 
 
 def _quat_to_rot_matrix(q: torch.Tensor) -> torch.Tensor:
@@ -332,11 +334,11 @@ def test_articulation_chain_fk_matches_plugged_ports_and_seating(
     frames[root_idx] = _quat_to_rot_matrix(root_quat)
     centers[root_idx] = root_pos
     for k in range(root_idx, num_segs - 1):
-        r_rel = _rot_x_y_z(rel_roll[:, k], rel_pitch[:, k], rel_yaw[:, k])
+        r_rel = _exp_so3(rel_roll[:, k], rel_pitch[:, k], rel_yaw[:, k])
         frames[k + 1] = torch.bmm(frames[k], r_rel)
         centers[k + 1] = centers[k] + 0.5 * seg_len * frames[k][:, :, 0] + 0.5 * seg_len * frames[k + 1][:, :, 0]
     for k in range(root_idx - 1, -1, -1):
-        r_rel = _rot_x_y_z(rel_roll[:, k], rel_pitch[:, k], rel_yaw[:, k])
+        r_rel = _exp_so3(rel_roll[:, k], rel_pitch[:, k], rel_yaw[:, k])
         frames[k] = torch.bmm(frames[k + 1], r_rel.transpose(1, 2))
         centers[k] = centers[k + 1] - 0.5 * seg_len * frames[k + 1][:, :, 0] - 0.5 * seg_len * frames[k][:, :, 0]
 

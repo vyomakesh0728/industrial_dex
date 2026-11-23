@@ -63,16 +63,22 @@ def main() -> int:
             cmd.append("--dry-run")
         else:
             cmd.append("--headless")
-        proc = subprocess.run(cmd, capture_output=True, text=True)
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+            rc = proc.returncode
+            stderr_tail = proc.stderr[-800:]
+        except subprocess.TimeoutExpired:
+            rc = 124
+            stderr_tail = "subprocess timed out after 180s"
         res_file = out_dir / "result.json"
         if res_file.is_file():
             entry = json.loads(res_file.read_text(encoding="utf-8"))
         else:
-            entry = {"task": task_id, "passed": False, "errors": [proc.stderr[-800:] or f"exit {proc.returncode}"]}
-        entry["exit_code"] = proc.returncode
+            entry = {"task": task_id, "passed": False, "errors": [stderr_tail or f"exit {rc}"]}
+        entry["exit_code"] = rc
         results.append(entry)
-        status = "PASS" if entry.get("passed") and proc.returncode == 0 else "FAIL"
-        print(f"[verify_matrix] {status}  {task_id}")
+        status = "PASS" if entry.get("passed") and rc == 0 else "FAIL"
+        print(f"[verify_matrix] {status}  {task_id}  faults={entry.get('faults', '-')}  wall={entry.get('wall_time_s', '-')}s", flush=True)
 
     passed = sum(1 for r in results if r.get("passed") and r.get("exit_code") == 0)
     summary = {
@@ -89,14 +95,14 @@ def main() -> int:
         "",
         f"Mode: `{'dry-run' if args.dry_run else args.driver}` | Variation: `{args.variation}` | Passed: `{passed}/{len(results)}`",
         "",
-        "| Task ID | Status | Action Space | Obs Space | Errors |",
-        "| --- | --- | --- | --- | --- |",
+        "| Task ID | Status | Action Space | Obs Space | Steps | Faults | Errors |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for r in results:
         st = "PASS" if r.get("passed") and r.get("exit_code") == 0 else "FAIL"
         errs = "; ".join(r.get("errors", []))[:80]
         lines.append(
-            f"| `{r['task']}` | {st} | {r.get('action_space', '-')} | {r.get('observation_space', '-')} | {errs or '-'} |"
+            f"| `{r['task']}` | {st} | {r.get('action_space', '-')} | {r.get('observation_space', '-')} | {r.get('steps', '-')} | {r.get('faults', '-')} | {errs or '-'} |"
         )
     (args.output / "matrix_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"[verify_matrix] summary: {passed}/{len(results)} passed -> {args.output / 'matrix_report.md'}")

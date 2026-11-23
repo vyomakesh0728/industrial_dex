@@ -4,6 +4,14 @@ Executable Isaac Sim and Isaac Lab simulation environments for IDB Board #1 (dat
 
 This repository ships simulation environments, CAD-derived OpenUSD assets, physics evaluators, and task documentation only. It contains no RL or IL training code, no policy models, no agent configurations, and no dataset collection scripts.
 
+## Live Isaac Sim previews
+
+Verified live on an NVIDIA GeForce RTX 3090 (`nvcr.io/nvidia/isaac-lab:2.2.0`, 20/20 environments passed with zero faults in [verification/matrix_report.md](verification/matrix_report.md)). Four additional rollout GIFs, 512x512 MP4 recordings, Table I sensor configs 1 through 6 results, and PhysX sensor logs live in [verification/](verification/README.md).
+
+| Franka Panda/FR3 + Articulated Cable (`SCFiberMaintenance`, `medium`, Sensor Config 1) | UR5 + Robotiq 2F-85 + CUDA FEM Deformable Cable (`SCPortSwap`, `medium`, Sensor Config 4) |
+| --- | --- |
+| ![Franka Articulation SC Fiber Maintenance](verification/gifs/franka_art_sc_maintenance_medium.gif) | ![UR5 Deformable SC Port Swap](verification/gifs/ur5_fem_sc_swap_medium.gif) |
+
 ## Benchmark coverage
 
 The suite registers 20 Gymnasium environments covering two robots, two cable physics models, and all five official IDB Board #1 tasks from [ag-industrial-dexterity-benchmarks](https://github.com/analogdevicesinc/ag-industrial-dexterity-benchmarks) and [arXiv:2607.14021](https://arxiv.org/pdf/2607.14021).
@@ -104,6 +112,7 @@ uv run python scripts/idb/export_assets.py --fetch
 - [Task 4: SC simplex fiber cable maintenance](docs/tasks/task4_sc_fiber_maintenance.md)
 - [Task 5: LC duplex fiber cable maintenance](docs/tasks/task5_lc_duplex_fiber_maintenance.md)
 - [Decision trail](decisions.tsv)
+- [Live GPU verification report and rollout gallery](verification/README.md)
 
 ## References
 

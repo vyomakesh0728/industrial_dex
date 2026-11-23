@@ -209,6 +209,8 @@ def _run_simulation(env, driver: str, steps_override: int, report: dict, torch_m
         if step == steps // 3 and env.num_envs > 1:
             before = env.episode_length_buf[1:].clone()
             env._reset_idx(torch_mod.tensor([0], device=env.device))
+            env.scene.write_data_to_sim()
+            env.sim.forward()
             report["partial_resets"] += 1
             if not torch_mod.equal(before, env.episode_length_buf[1:]):
                 report["errors"].append("partial reset modified another env")
@@ -286,6 +288,8 @@ def main() -> int:
         "driver": args_cli.driver,
         "seed": env_cfg.seed,
         "num_envs": env_cfg.scene.num_envs,
+        "action_space": env_cfg.action_space,
+        "observation_space": env_cfg.observation_space,
         "steps": 0,
         "episodes": 0,
         "partial_resets": 0,

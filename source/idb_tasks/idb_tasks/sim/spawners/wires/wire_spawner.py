@@ -15,7 +15,10 @@ import os
 from typing import Any
 
 import numpy as np
-from pxr import Gf, Sdf, Usd, UsdGeom, UsdPhysics, Vt
+try:
+    from pxr import Gf, Sdf, Usd, UsdGeom, UsdPhysics, Vt
+except ModuleNotFoundError:  # Inside Isaac Sim python.sh prior to SimulationApp startup
+    Gf = Sdf = Usd = UsdGeom = UsdPhysics = Vt = None  # type: ignore[assignment]
 
 from idb_tasks.sim.spawners.ports.connector_profiles import get_connector_profile
 from idb_tasks.sim.spawners.ports.connector_spawner import build_connector_port_usd, default_visual_usd
@@ -74,7 +77,7 @@ def build_articulated_wire_usd(
     orientation: tuple[float, float, float, float] | None = None,
     stiffness: float = 0.25,
     damping: float = 0.005,
-    joint_limit: float | None = 0.6,
+    joint_limit: float | None = 0.85,
     density: float = 950.0,
     capsule_overlap: float | None = 0.004,
     port_mass: float = 0.01,
@@ -283,10 +286,14 @@ def _spawn_wire_assembly_impl(prim_path: str, cfg: IDBWireAssemblyCfg, translati
             color=w.color,
             self_collision=w.self_collision,
         )
-        # Apply PhysX velocity / damping limits matching WireCraft's verified cable stability settings.
-        for i in range(w.num_segments):
-            seg = stage.GetPrimAtPath(f"{prim_path}/seg_{i}")
-            rb = PhysxSchema.PhysxRigidBodyAPI.Apply(seg)
+        # Apply PhysX velocity / damping limits to all segments AND connector ports matching WireCraft stability settings.
+        body_paths = [f"{prim_path}/seg_{i}" for i in range(w.num_segments)] + [
+            f"{prim_path}/start_port",
+            f"{prim_path}/end_port",
+        ]
+        for bpath in body_paths:
+            body_prim = stage.GetPrimAtPath(bpath)
+            rb = PhysxSchema.PhysxRigidBodyAPI.Apply(body_prim)
             rb.CreateLinearDampingAttr().Set(float(w.segment_linear_damping))
             rb.CreateAngularDampingAttr().Set(float(w.segment_angular_damping))
             rb.CreateMaxLinearVelocityAttr().Set(float(w.max_linear_velocity))
@@ -382,7 +389,7 @@ class IDBArticulationWireCfg:
     radius: float = 0.002
     stiffness: float = 0.20
     damping: float = 0.005
-    joint_limit: float = 0.6
+    joint_limit: float = 0.85
     density: float = 950.0
     self_collision: bool = True
     color: tuple[float, float, float] = (0.95, 0.82, 0.08)

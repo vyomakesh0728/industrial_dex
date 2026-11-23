@@ -1,0 +1,1328 @@
+{
+  "total": 20,
+  "passed": 20,
+  "failed": 0,
+  "dry_run": false,
+  "results": [
+    {
+      "task": "IDB-Franka-Articulation-EthernetPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 65,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "franka",
+          "task": "ethernet_port_swap",
+          "wire": "articulation",
+          "connector": "rj45",
+          "far_connector": "rj45",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+          "wire_preset:cat6_ethernet",
+          "task:presets/task/ethernet_port_swap.yaml",
+          "wire:presets/wire/articulation.yaml",
+          "connector:presets/connector/rj45.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-Franka-Articulation-EthernetPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-Franka-Articulation-EthernetPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        0,
+        0
+      ],
+      "rubric_max": 6,
+      "joint_motion": 1.0729,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 13.37,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-Franka-Articulation-LCDuplexPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 65,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "franka",
+          "task": "lc_duplex_port_swap",
+          "wire": "articulation",
+          "connector": "lc_duplex",
+          "far_connector": "lc_duplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_duplex",
+          "task:presets/task/lc_duplex_port_swap.yaml",
+          "wire:presets/wire/articulation.yaml",
+          "connector:presets/connector/lc_duplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-Franka-Articulation-LCDuplexPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-Franka-Articulation-LCDuplexPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        0,
+        0
+      ],
+      "rubric_max": 13,
+      "joint_motion": 1.0729,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 14.15,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-Franka-Articulation-LCFiberMaintenance-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 76,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "franka",
+          "task": "lc_fiber_maintenance",
+          "wire": "articulation",
+          "connector": "lc_duplex",
+          "far_connector": "lc_duplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_duplex",
+          "task:presets/task/lc_fiber_maintenance.yaml",
+          "wire:presets/wire/articulation.yaml",
+          "connector:presets/connector/lc_duplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-Franka-Articulation-LCFiberMaintenance-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-Franka-Articulation-LCFiberMaintenance-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        0,
+        0
+      ],
+      "rubric_max": 22,
+      "joint_motion": 1.0729,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 14.24,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-Franka-Articulation-SCFiberMaintenance-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 76,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "franka",
+          "task": "sc_fiber_maintenance",
+          "wire": "articulation",
+          "connector": "sc_simplex",
+          "far_connector": "lc_simplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_simplex",
+          "task:presets/task/sc_fiber_maintenance.yaml",
+          "wire:presets/wire/articulation.yaml",
+          "connector:presets/connector/sc_simplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-Franka-Articulation-SCFiberMaintenance-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-Franka-Articulation-SCFiberMaintenance-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        2,
+        2
+      ],
+      "rubric_max": 19,
+      "joint_motion": 1.0729,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 12.75,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-Franka-Articulation-SCPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 65,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "franka",
+          "task": "sc_port_swap",
+          "wire": "articulation",
+          "connector": "sc_simplex",
+          "far_connector": "lc_simplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_simplex",
+          "task:presets/task/sc_port_swap.yaml",
+          "wire:presets/wire/articulation.yaml",
+          "connector:presets/connector/sc_simplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-Franka-Articulation-SCPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-Franka-Articulation-SCPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        2,
+        2
+      ],
+      "rubric_max": 10,
+      "joint_motion": 1.0729,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 12.19,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-Franka-Deformable-EthernetPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 65,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "franka",
+          "task": "ethernet_port_swap",
+          "wire": "deformable",
+          "connector": "rj45",
+          "far_connector": "rj45",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+          "wire_preset:cat6_ethernet",
+          "task:presets/task/ethernet_port_swap.yaml",
+          "wire:presets/wire/deformable.yaml",
+          "connector:presets/connector/rj45.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-Franka-Deformable-EthernetPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-Franka-Deformable-EthernetPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        1,
+        1
+      ],
+      "rubric_max": 6,
+      "joint_motion": 1.07433,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 10.33,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-Franka-Deformable-LCDuplexPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 65,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "franka",
+          "task": "lc_duplex_port_swap",
+          "wire": "deformable",
+          "connector": "lc_duplex",
+          "far_connector": "lc_duplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_duplex",
+          "task:presets/task/lc_duplex_port_swap.yaml",
+          "wire:presets/wire/deformable.yaml",
+          "connector:presets/connector/lc_duplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-Franka-Deformable-LCDuplexPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-Franka-Deformable-LCDuplexPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        3,
+        3
+      ],
+      "rubric_max": 13,
+      "joint_motion": 1.07433,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 10.91,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-Franka-Deformable-LCFiberMaintenance-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 76,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "franka",
+          "task": "lc_fiber_maintenance",
+          "wire": "deformable",
+          "connector": "lc_duplex",
+          "far_connector": "lc_duplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_duplex",
+          "task:presets/task/lc_fiber_maintenance.yaml",
+          "wire:presets/wire/deformable.yaml",
+          "connector:presets/connector/lc_duplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-Franka-Deformable-LCFiberMaintenance-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-Franka-Deformable-LCFiberMaintenance-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        3,
+        3
+      ],
+      "rubric_max": 22,
+      "joint_motion": 1.07433,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 10.91,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-Franka-Deformable-SCFiberMaintenance-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 76,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "franka",
+          "task": "sc_fiber_maintenance",
+          "wire": "deformable",
+          "connector": "sc_simplex",
+          "far_connector": "lc_simplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_simplex",
+          "task:presets/task/sc_fiber_maintenance.yaml",
+          "wire:presets/wire/deformable.yaml",
+          "connector:presets/connector/sc_simplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-Franka-Deformable-SCFiberMaintenance-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-Franka-Deformable-SCFiberMaintenance-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        2,
+        2
+      ],
+      "rubric_max": 19,
+      "joint_motion": 1.07433,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 9.76,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-Franka-Deformable-SCPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 65,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "franka",
+          "task": "sc_port_swap",
+          "wire": "deformable",
+          "connector": "sc_simplex",
+          "far_connector": "lc_simplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_simplex",
+          "task:presets/task/sc_port_swap.yaml",
+          "wire:presets/wire/deformable.yaml",
+          "connector:presets/connector/sc_simplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-Franka-Deformable-SCPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-Franka-Deformable-SCPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        2,
+        2
+      ],
+      "rubric_max": 10,
+      "joint_motion": 1.07433,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 9.52,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-UR5-Articulation-EthernetPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 63,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "ur5",
+          "task": "ethernet_port_swap",
+          "wire": "articulation",
+          "connector": "rj45",
+          "far_connector": "rj45",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.ur5.robot_cfg:build_robot_cfg",
+          "wire_preset:cat6_ethernet",
+          "task:presets/task/ethernet_port_swap.yaml",
+          "wire:presets/wire/articulation.yaml",
+          "connector:presets/connector/rj45.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-UR5-Articulation-EthernetPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-UR5-Articulation-EthernetPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        0,
+        0
+      ],
+      "rubric_max": 6,
+      "joint_motion": 9.45679,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 13.7,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-UR5-Articulation-LCDuplexPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 63,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "ur5",
+          "task": "lc_duplex_port_swap",
+          "wire": "articulation",
+          "connector": "lc_duplex",
+          "far_connector": "lc_duplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.ur5.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_duplex",
+          "task:presets/task/lc_duplex_port_swap.yaml",
+          "wire:presets/wire/articulation.yaml",
+          "connector:presets/connector/lc_duplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-UR5-Articulation-LCDuplexPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-UR5-Articulation-LCDuplexPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        1,
+        0
+      ],
+      "rubric_max": 13,
+      "joint_motion": 9.45679,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 14.92,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-UR5-Articulation-LCFiberMaintenance-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 74,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "ur5",
+          "task": "lc_fiber_maintenance",
+          "wire": "articulation",
+          "connector": "lc_duplex",
+          "far_connector": "lc_duplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.ur5.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_duplex",
+          "task:presets/task/lc_fiber_maintenance.yaml",
+          "wire:presets/wire/articulation.yaml",
+          "connector:presets/connector/lc_duplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-UR5-Articulation-LCFiberMaintenance-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-UR5-Articulation-LCFiberMaintenance-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        1,
+        0
+      ],
+      "rubric_max": 22,
+      "joint_motion": 9.45679,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 14.9,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-UR5-Articulation-SCFiberMaintenance-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 74,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "ur5",
+          "task": "sc_fiber_maintenance",
+          "wire": "articulation",
+          "connector": "sc_simplex",
+          "far_connector": "lc_simplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.ur5.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_simplex",
+          "task:presets/task/sc_fiber_maintenance.yaml",
+          "wire:presets/wire/articulation.yaml",
+          "connector:presets/connector/sc_simplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-UR5-Articulation-SCFiberMaintenance-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-UR5-Articulation-SCFiberMaintenance-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        2,
+        2
+      ],
+      "rubric_max": 19,
+      "joint_motion": 9.45679,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 13.07,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-UR5-Articulation-SCPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 63,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "ur5",
+          "task": "sc_port_swap",
+          "wire": "articulation",
+          "connector": "sc_simplex",
+          "far_connector": "lc_simplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.ur5.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_simplex",
+          "task:presets/task/sc_port_swap.yaml",
+          "wire:presets/wire/articulation.yaml",
+          "connector:presets/connector/sc_simplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-UR5-Articulation-SCPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-UR5-Articulation-SCPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        2,
+        2
+      ],
+      "rubric_max": 10,
+      "joint_motion": 9.45679,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 13.0,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-UR5-Deformable-EthernetPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 63,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "ur5",
+          "task": "ethernet_port_swap",
+          "wire": "deformable",
+          "connector": "rj45",
+          "far_connector": "rj45",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.ur5.robot_cfg:build_robot_cfg",
+          "wire_preset:cat6_ethernet",
+          "task:presets/task/ethernet_port_swap.yaml",
+          "wire:presets/wire/deformable.yaml",
+          "connector:presets/connector/rj45.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-UR5-Deformable-EthernetPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-UR5-Deformable-EthernetPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        1,
+        1
+      ],
+      "rubric_max": 6,
+      "joint_motion": 9.78879,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 11.07,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-UR5-Deformable-LCDuplexPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 63,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "ur5",
+          "task": "lc_duplex_port_swap",
+          "wire": "deformable",
+          "connector": "lc_duplex",
+          "far_connector": "lc_duplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.ur5.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_duplex",
+          "task:presets/task/lc_duplex_port_swap.yaml",
+          "wire:presets/wire/deformable.yaml",
+          "connector:presets/connector/lc_duplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-UR5-Deformable-LCDuplexPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-UR5-Deformable-LCDuplexPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        3,
+        3
+      ],
+      "rubric_max": 13,
+      "joint_motion": 9.78879,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 11.6,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-UR5-Deformable-LCFiberMaintenance-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 74,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "ur5",
+          "task": "lc_fiber_maintenance",
+          "wire": "deformable",
+          "connector": "lc_duplex",
+          "far_connector": "lc_duplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.ur5.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_duplex",
+          "task:presets/task/lc_fiber_maintenance.yaml",
+          "wire:presets/wire/deformable.yaml",
+          "connector:presets/connector/lc_duplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-UR5-Deformable-LCFiberMaintenance-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-UR5-Deformable-LCFiberMaintenance-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        3,
+        3
+      ],
+      "rubric_max": 22,
+      "joint_motion": 9.78879,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 11.96,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-UR5-Deformable-SCFiberMaintenance-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 74,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "ur5",
+          "task": "sc_fiber_maintenance",
+          "wire": "deformable",
+          "connector": "sc_simplex",
+          "far_connector": "lc_simplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.ur5.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_simplex",
+          "task:presets/task/sc_fiber_maintenance.yaml",
+          "wire:presets/wire/deformable.yaml",
+          "connector:presets/connector/sc_simplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-UR5-Deformable-SCFiberMaintenance-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-UR5-Deformable-SCFiberMaintenance-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        2,
+        2
+      ],
+      "rubric_max": 19,
+      "joint_motion": 9.78879,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 10.55,
+      "exit_code": 0
+    },
+    {
+      "task": "IDB-UR5-Deformable-SCPortSwap-v0",
+      "mode": "demo",
+      "variation": "sparse",
+      "driver": "random",
+      "seed": 42,
+      "num_envs": 2,
+      "action_space": 7,
+      "observation_space": 63,
+      "steps": 60,
+      "episodes": 0,
+      "partial_resets": 1,
+      "full_resets": 1,
+      "nonfinite": [],
+      "errors": [],
+      "passed": true,
+      "composition": {
+        "spec": {
+          "robot": "ur5",
+          "task": "sc_port_swap",
+          "wire": "deformable",
+          "connector": "sc_simplex",
+          "far_connector": "lc_simplex",
+          "variation": "sparse"
+        },
+        "mode": "demo",
+        "env_layers": [
+          "defaults:SingleArmIDBEnvCfg",
+          "robot:idb_tasks.direct.idb.single_arm.ur5.robot_cfg:build_robot_cfg",
+          "wire_preset:os2_fiber_simplex",
+          "task:presets/task/sc_port_swap.yaml",
+          "wire:presets/wire/deformable.yaml",
+          "connector:presets/connector/sc_simplex.yaml",
+          "variation:presets/variation/sparse.yaml",
+          "mode:presets/mode/demo.yaml"
+        ],
+        "cli": [
+          "env.scene.num_envs=2"
+        ]
+      },
+      "argv": [
+        "--task",
+        "IDB-UR5-Deformable-SCPortSwap-v0",
+        "--variation",
+        "sparse",
+        "--driver",
+        "random",
+        "--num_envs",
+        "2",
+        "--steps",
+        "60",
+        "--output",
+        "/workspace/verify_gpu/IDB-UR5-Deformable-SCPortSwap-v0",
+        "--headless"
+      ],
+      "last_rubric_score": [
+        2,
+        2
+      ],
+      "rubric_max": 10,
+      "joint_motion": 9.78879,
+      "faults": 0,
+      "fault_log": [],
+      "wall_time_s": 9.9,
+      "exit_code": 0
+    }
+  ]
+}

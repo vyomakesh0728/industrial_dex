@@ -70,25 +70,48 @@ def _rot_matrix_from_quat(q: torch.Tensor) -> torch.Tensor:
     return r
 
 
+def _log_so3(rot: torch.Tensor) -> torch.Tensor:
+    """Compute SO(3) rotation vector (axis * angle) matching PhysX 5 spherical joint exp-map DOFs."""
+    trace = rot[..., 0, 0] + rot[..., 1, 1] + rot[..., 2, 2]
+    cos_theta = ((trace - 1.0) * 0.5).clamp(-1.0 + 1e-7, 1.0 - 1e-7)
+    theta = torch.acos(cos_theta)
+    vee = torch.stack(
+        (
+            rot[..., 2, 1] - rot[..., 1, 2],
+            rot[..., 0, 2] - rot[..., 2, 0],
+            rot[..., 1, 0] - rot[..., 0, 1],
+        ),
+        dim=-1,
+    )
+    sin_theta = torch.sin(theta)
+    # Taylor expansion theta / (2 * sin(theta)) ~ 0.5 + theta^2 / 12 near theta = 0.
+    scale = torch.where(
+        theta.abs() > 1e-4,
+        theta / (2.0 * sin_theta.clamp_min(1e-7)),
+        0.5 + (theta * theta) / 12.0,
+    )
+    return vee * scale.unsqueeze(-1)
+
+
 def compute_chain_arc_joint_state(
     arc_points: torch.Tensor,
     far_port_quat: torch.Tensor,
     active_port_quat: torch.Tensor,
     root_seg_index: int = 0,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Compute port-aligned twisted Bishop segment frames and relative (rotX, rotY, rotZ) joint angles.
+    """Compute port-aligned twisted Bishop segment frames and PhysX exp-map (rotX, rotY, rotZ) joint DOFs.
 
     Seeds ``seg_0`` at ``R(far_port_quat) @ R_z(pi)`` (matching ``joint_start_port``'s USD FixedJoint),
     parallel-transports frames along the arc, distributes the exact residual axial roll needed to match
-    ``active_port_quat`` uniformly across all ``S - 1`` inter-segment joints, and extracts intrinsic
-    XYZ Euler angles ``R_x(rx) @ R_y(ry) @ R_z(rz) = R_{k-1}^T @ R_k``.
+    ``active_port_quat`` uniformly across all ``S - 1`` inter-segment joints, and extracts the SO(3)
+    rotation vector ``log_so3(R_{k-1}^T @ R_k)`` matching PhysX 5 spherical articulation joints.
 
     Returns:
         root_pos: (N, 3) world center of ``seg_{root_seg_index}``.
         root_quat: (N, 4) wxyz world orientation of ``seg_{root_seg_index}``.
-        rel_roll_x: (N, num_segments - 1) relative X torsion angle per joint (rad).
-        rel_pitch_y: (N, num_segments - 1) relative Y bending angle per joint (rad).
-        rel_yaw_z: (N, num_segments - 1) relative Z bending angle per joint (rad).
+        rel_roll_x: (N, num_segments - 1) SO(3) rotation vector X component per joint (rad).
+        rel_pitch_y: (N, num_segments - 1) SO(3) rotation vector Y component per joint (rad).
+        rel_yaw_z: (N, num_segments - 1) SO(3) rotation vector Z component per joint (rad).
     """
     n, k_pts, _ = arc_points.shape
     num_segs = k_pts - 1
@@ -133,12 +156,10 @@ def compute_chain_arc_joint_state(
     rel_roll, rel_pitch, rel_yaw = [], [], []
     for k in range(1, num_segs):
         r_rel = torch.bmm(twisted[k - 1].transpose(1, 2), twisted[k])
-        ry = torch.asin(r_rel[:, 0, 2].clamp(-0.999999, 0.999999))
-        rz = torch.atan2(-r_rel[:, 0, 1], r_rel[:, 0, 0])
-        rx = torch.atan2(-r_rel[:, 1, 2], r_rel[:, 2, 2])
-        rel_roll.append(rx)
-        rel_pitch.append(ry)
-        rel_yaw.append(rz)
+        rotvec = _log_so3(r_rel)
+        rel_roll.append(rotvec[:, 0])
+        rel_pitch.append(rotvec[:, 1])
+        rel_yaw.append(rotvec[:, 2])
 
     root_pos = seg_centers[:, root_seg_index]
     root_quat = _quat_from_rot_matrix(twisted[root_seg_index])
@@ -263,7 +284,7 @@ class ArticulationWire:
         self._base_materials = self.wire.root_physx_view.get_material_properties().clone()
         start_prof = get_connector_profile(self.assembly_cfg.start_family)
         end_prof = get_connector_profile(self.assembly_cfg.end_family)
-        embed = float(self.assembly_cfg.port_embed_depth)
+        embed = float(self.assembly_cfg.articulation.port_cable_embed_depth)
         self._start_anchor_x = start_prof.cable_anchor_x(min(embed, start_prof.housing_bounds[1] - start_prof.housing_bounds[0]))
         self._end_anchor_x = end_prof.cable_anchor_x(min(embed, end_prof.housing_bounds[1] - end_prof.housing_bounds[0]))
 

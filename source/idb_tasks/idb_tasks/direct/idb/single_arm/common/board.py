@@ -97,6 +97,10 @@ class IDBBoardRuntime:
                 tip_length=geom.tip_length,
                 name=f"neighbor_wire_{idx}",
             )
+            # Separate interleaved horizontal Panel C pairs vertically so their 3D arches never collide.
+            if far_p.startswith("C") and act_p.startswith("C"):
+                col = int(far_p[1:])
+                backend.cfg = w_cfg.replace(lateral_bow=(0.0, -0.045 if (col % 2 == 1) else 0.025))
             backend.spawn()
             backend.pin_far_end()
             self.neighbor_wires.append((far_p, act_p, backend))

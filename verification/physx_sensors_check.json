@@ -1,0 +1,10 @@
+{
+  "board_physx_sync": {
+    "envs_have_distinct_board_pos": true,
+    "frame_err_mm": 0.0,
+    "pad_err_mm": 0.0,
+    "port_a5_err_mm": 0.0
+  },
+  "polishing_pad_max_contact_force_n": 0.3927,
+  "contact_sensor_triggered": true
+}

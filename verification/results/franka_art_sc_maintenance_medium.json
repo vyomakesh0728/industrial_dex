@@ -1,0 +1,74 @@
+{
+  "task": "IDB-Franka-Articulation-SCFiberMaintenance-v0",
+  "mode": "demo",
+  "variation": "medium",
+  "driver": "random",
+  "seed": 42,
+  "num_envs": 2,
+  "action_space": 7,
+  "observation_space": 76,
+  "steps": 120,
+  "episodes": 0,
+  "partial_resets": 1,
+  "full_resets": 1,
+  "nonfinite": [],
+  "errors": [],
+  "passed": true,
+  "composition": {
+    "spec": {
+      "robot": "franka",
+      "task": "sc_fiber_maintenance",
+      "wire": "articulation",
+      "connector": "sc_simplex",
+      "far_connector": "lc_simplex",
+      "variation": "medium"
+    },
+    "mode": "demo",
+    "env_layers": [
+      "defaults:SingleArmIDBEnvCfg",
+      "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+      "wire_preset:os2_fiber_simplex",
+      "task:presets/task/sc_fiber_maintenance.yaml",
+      "wire:presets/wire/articulation.yaml",
+      "connector:presets/connector/sc_simplex.yaml",
+      "variation:presets/variation/medium.yaml",
+      "mode:presets/mode/demo.yaml"
+    ],
+    "cli": [
+      "env.scene.num_envs=2",
+      "env.sensors.render_stride=2",
+      "env.sensors.paper_config_id=1",
+      "env.sensors.enable_cameras=True",
+      "env.sensors.cameras=['side']",
+      "env.sensors.camera_resolution=512"
+    ]
+  },
+  "argv": [
+    "--headless",
+    "--task",
+    "IDB-Franka-Articulation-SCFiberMaintenance-v0",
+    "--variation",
+    "medium",
+    "--sensor-config",
+    "1",
+    "--driver",
+    "random",
+    "--num_envs",
+    "2",
+    "--steps",
+    "120",
+    "--video",
+    "--output",
+    "/workspace/demos/franka_art_sc_maintenance_medium",
+    "env.sensors.render_stride=2"
+  ],
+  "last_rubric_score": [
+    0,
+    2
+  ],
+  "rubric_max": 19,
+  "joint_motion": 2.16107,
+  "faults": 0,
+  "fault_log": [],
+  "wall_time_s": 40.55
+}

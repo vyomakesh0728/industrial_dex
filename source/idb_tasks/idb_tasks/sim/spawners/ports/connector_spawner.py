@@ -11,7 +11,10 @@ import math
 import os
 from typing import Any
 
-from pxr import Gf, Usd, UsdGeom, UsdPhysics
+try:
+    from pxr import Gf, Usd, UsdGeom, UsdPhysics
+except ModuleNotFoundError:  # Inside Isaac Sim python.sh prior to SimulationApp startup
+    Gf = Usd = UsdGeom = UsdPhysics = None  # type: ignore[assignment]
 
 from idb_assets import IDB_ASSET_DIR
 from idb_tasks.utils.isaac_compat import HAS_ISAACLAB, configclass, require_isaaclab

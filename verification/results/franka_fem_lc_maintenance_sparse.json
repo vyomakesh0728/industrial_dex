@@ -1,0 +1,74 @@
+{
+  "task": "IDB-Franka-Deformable-LCFiberMaintenance-v0",
+  "mode": "demo",
+  "variation": "sparse",
+  "driver": "random",
+  "seed": 42,
+  "num_envs": 2,
+  "action_space": 7,
+  "observation_space": 76,
+  "steps": 120,
+  "episodes": 0,
+  "partial_resets": 1,
+  "full_resets": 1,
+  "nonfinite": [],
+  "errors": [],
+  "passed": true,
+  "composition": {
+    "spec": {
+      "robot": "franka",
+      "task": "lc_fiber_maintenance",
+      "wire": "deformable",
+      "connector": "lc_duplex",
+      "far_connector": "lc_duplex",
+      "variation": "sparse"
+    },
+    "mode": "demo",
+    "env_layers": [
+      "defaults:SingleArmIDBEnvCfg",
+      "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+      "wire_preset:os2_fiber_duplex",
+      "task:presets/task/lc_fiber_maintenance.yaml",
+      "wire:presets/wire/deformable.yaml",
+      "connector:presets/connector/lc_duplex.yaml",
+      "variation:presets/variation/sparse.yaml",
+      "mode:presets/mode/demo.yaml"
+    ],
+    "cli": [
+      "env.scene.num_envs=2",
+      "env.sensors.render_stride=2",
+      "env.sensors.paper_config_id=3",
+      "env.sensors.enable_cameras=True",
+      "env.sensors.cameras=['side']",
+      "env.sensors.camera_resolution=512"
+    ]
+  },
+  "argv": [
+    "--headless",
+    "--task",
+    "IDB-Franka-Deformable-LCFiberMaintenance-v0",
+    "--variation",
+    "sparse",
+    "--sensor-config",
+    "3",
+    "--driver",
+    "random",
+    "--num_envs",
+    "2",
+    "--steps",
+    "120",
+    "--video",
+    "--output",
+    "/workspace/demos/franka_fem_lc_maintenance_sparse",
+    "env.sensors.render_stride=2"
+  ],
+  "last_rubric_score": [
+    3,
+    3
+  ],
+  "rubric_max": 22,
+  "joint_motion": 2.16375,
+  "faults": 0,
+  "fault_log": [],
+  "wall_time_s": 24.05
+}

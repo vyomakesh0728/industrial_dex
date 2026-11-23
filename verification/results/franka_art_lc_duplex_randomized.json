@@ -1,0 +1,89 @@
+{
+  "task": "IDB-Franka-Articulation-LCDuplexPortSwap-v0",
+  "mode": "demo",
+  "variation": "randomized",
+  "driver": "random",
+  "seed": 42,
+  "num_envs": 2,
+  "action_space": 7,
+  "observation_space": 65,
+  "steps": 120,
+  "episodes": 1,
+  "partial_resets": 2,
+  "full_resets": 1,
+  "nonfinite": [],
+  "errors": [],
+  "passed": true,
+  "composition": {
+    "spec": {
+      "robot": "franka",
+      "task": "lc_duplex_port_swap",
+      "wire": "articulation",
+      "connector": "lc_duplex",
+      "far_connector": "lc_duplex",
+      "variation": "randomized"
+    },
+    "mode": "demo",
+    "env_layers": [
+      "defaults:SingleArmIDBEnvCfg",
+      "robot:idb_tasks.direct.idb.single_arm.franka.robot_cfg:build_robot_cfg",
+      "wire_preset:os2_fiber_duplex",
+      "task:presets/task/lc_duplex_port_swap.yaml",
+      "wire:presets/wire/articulation.yaml",
+      "connector:presets/connector/lc_duplex.yaml",
+      "variation:presets/variation/randomized.yaml",
+      "mode:presets/mode/demo.yaml"
+    ],
+    "cli": [
+      "env.scene.num_envs=2",
+      "env.sensors.render_stride=2",
+      "env.sensors.paper_config_id=5",
+      "env.sensors.enable_cameras=True",
+      "env.sensors.cameras=['side']",
+      "env.sensors.camera_resolution=512"
+    ]
+  },
+  "argv": [
+    "--headless",
+    "--task",
+    "IDB-Franka-Articulation-LCDuplexPortSwap-v0",
+    "--variation",
+    "randomized",
+    "--sensor-config",
+    "5",
+    "--driver",
+    "random",
+    "--num_envs",
+    "2",
+    "--steps",
+    "120",
+    "--video",
+    "--output",
+    "/workspace/demos/franka_art_lc_duplex_randomized",
+    "env.sensors.render_stride=2"
+  ],
+  "last_rubric_score": [
+    0,
+    0
+  ],
+  "rubric_max": 13,
+  "joint_motion": 2.06306,
+  "faults": 1,
+  "fault_log": [
+    {
+      "step": 55,
+      "envs": [
+        0
+      ],
+      "joint_speed": [
+        0.15559765696525574,
+        0.20371147990226746
+      ],
+      "port_speed": [
+        319620644864.0,
+        2.700443744659424
+      ]
+    }
+  ],
+  "wall_time_s": 42.49
+}

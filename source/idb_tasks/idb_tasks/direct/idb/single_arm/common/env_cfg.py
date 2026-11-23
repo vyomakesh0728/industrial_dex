@@ -34,21 +34,22 @@ PAPER_SENSOR_CONFIGS: dict[int, dict[str, Any]] = {
 
 # Standard disjoint front-panel background cable topologies for IDB Board #1 difficulty modulation.
 # All 16 pairs partition the 32 front ports without sharing any single receptacle.
+# Ordered across all three connector zones so `medium` (6 neighbors) populates Ethernet, SC/LC, and LC duplex cleanly.
 POPULATION_CATALOG: tuple[tuple[str, str, str], ...] = (
     ("B1", "A1", "cat6_ethernet"),
-    ("B2", "A2", "cat6_ethernet"),
+    ("B6", "A6", "os2_fiber_simplex"),
+    ("B10", "A10", "os2_fiber_duplex"),
     ("B3", "A3", "cat6_ethernet"),
+    ("B8", "A8", "os2_fiber_simplex"),
+    ("B12", "A12", "os2_fiber_duplex"),
+    ("B2", "A2", "cat6_ethernet"),
     ("B4", "A4", "cat6_ethernet"),
+    ("B5", "A5", "os2_fiber_simplex"),
+    ("B7", "A7", "os2_fiber_simplex"),
+    ("B9", "A9", "os2_fiber_duplex"),
+    ("B11", "A11", "os2_fiber_duplex"),
     ("C1", "C3", "cat6_ethernet"),
     ("C2", "C4", "cat6_ethernet"),
-    ("B5", "A5", "os2_fiber_simplex"),
-    ("B6", "A6", "os2_fiber_simplex"),
-    ("B7", "A7", "os2_fiber_simplex"),
-    ("B8", "A8", "os2_fiber_simplex"),
-    ("B9", "A9", "os2_fiber_duplex"),
-    ("B10", "A10", "os2_fiber_duplex"),
-    ("B11", "A11", "os2_fiber_duplex"),
-    ("B12", "A12", "os2_fiber_duplex"),
     ("C9", "C11", "os2_fiber_duplex"),
     ("C10", "C12", "os2_fiber_duplex"),
 )
@@ -91,7 +92,7 @@ else:
 class CameraIntrinsicsCfg:
     """Pinhole camera intrinsics for workstation and IDB Table I sensors."""
 
-    focal_length: float = 24.0
+    focal_length: float = 21.0
     focus_distance: float = 400.0
     horizontal_aperture: float = 20.955
     clipping_range: tuple[float, float] = (0.05, 2.5)
@@ -113,10 +114,10 @@ class SensorSuiteCfg:
     """Expose 6-DOF wrist force/torque wrench in observations['ft'] and task evaluators."""
     enable_polishing_contact_sensor: bool = True
     """Attach ContactSensor on Board #1's fiber polishing pad for 1-2 N force feedback."""
-    side_camera_pose: tuple[float, ...] = (0.25, 0.55, 1.32, 0.56, 0.14, 0.28, -0.76)
-    side2_camera_pose: tuple[float, ...] = (0.05, -0.50, 1.25, 0.88, -0.18, 0.18, 0.40)
-    scene_d435i_pose: tuple[float, ...] = (0.12, 0.28, 1.28, 0.85, 0.12, 0.28, -0.43)
-    scene_adtf3175_pose: tuple[float, ...] = (0.12, -0.28, 1.28, 0.85, -0.12, 0.28, 0.43)
+    side_camera_pose: tuple[float, ...] = (0.02, -0.72, 1.24, 0.8447, -0.0851, 0.1412, 0.5093)
+    side2_camera_pose: tuple[float, ...] = (0.02, 0.72, 1.24, 0.8447, 0.0851, 0.1412, -0.5093)
+    scene_d435i_pose: tuple[float, ...] = (0.06, -0.34, 1.24, 0.9253, -0.0706, 0.2143, 0.3048)
+    scene_adtf3175_pose: tuple[float, ...] = (0.06, 0.34, 1.24, 0.9253, 0.0706, 0.2143, -0.3048)
 
 
 @configclass

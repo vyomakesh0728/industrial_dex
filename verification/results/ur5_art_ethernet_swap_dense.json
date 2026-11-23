@@ -1,0 +1,173 @@
+{
+  "task": "IDB-UR5-Articulation-EthernetPortSwap-v0",
+  "mode": "demo",
+  "variation": "dense",
+  "driver": "random",
+  "seed": 42,
+  "num_envs": 2,
+  "action_space": 7,
+  "observation_space": 63,
+  "steps": 120,
+  "episodes": 7,
+  "partial_resets": 8,
+  "full_resets": 1,
+  "nonfinite": [],
+  "errors": [],
+  "passed": true,
+  "composition": {
+    "spec": {
+      "robot": "ur5",
+      "task": "ethernet_port_swap",
+      "wire": "articulation",
+      "connector": "rj45",
+      "far_connector": "rj45",
+      "variation": "dense"
+    },
+    "mode": "demo",
+    "env_layers": [
+      "defaults:SingleArmIDBEnvCfg",
+      "robot:idb_tasks.direct.idb.single_arm.ur5.robot_cfg:build_robot_cfg",
+      "wire_preset:cat6_ethernet",
+      "task:presets/task/ethernet_port_swap.yaml",
+      "wire:presets/wire/articulation.yaml",
+      "connector:presets/connector/rj45.yaml",
+      "variation:presets/variation/dense.yaml",
+      "mode:presets/mode/demo.yaml"
+    ],
+    "cli": [
+      "env.scene.num_envs=2",
+      "env.sensors.render_stride=2",
+      "env.sensors.paper_config_id=2",
+      "env.sensors.enable_cameras=True",
+      "env.sensors.cameras=['side']",
+      "env.sensors.camera_resolution=512"
+    ]
+  },
+  "argv": [
+    "--headless",
+    "--task",
+    "IDB-UR5-Articulation-EthernetPortSwap-v0",
+    "--variation",
+    "dense",
+    "--sensor-config",
+    "2",
+    "--driver",
+    "random",
+    "--num_envs",
+    "2",
+    "--steps",
+    "120",
+    "--video",
+    "--output",
+    "/workspace/demos/ur5_art_ethernet_swap_dense",
+    "env.sensors.render_stride=2"
+  ],
+  "last_rubric_score": [
+    0,
+    0
+  ],
+  "rubric_max": 6,
+  "joint_motion": 20.25411,
+  "faults": 7,
+  "fault_log": [
+    {
+      "step": 5,
+      "envs": [
+        0
+      ],
+      "joint_speed": [
+        0.9188050031661987,
+        0.6176117658615112
+      ],
+      "port_speed": [
+        6803908.5,
+        3.2905056476593018
+      ]
+    },
+    {
+      "step": 11,
+      "envs": [
+        0
+      ],
+      "joint_speed": [
+        0.1804017573595047,
+        1.411298394203186
+      ],
+      "port_speed": [
+        5435.53369140625,
+        0.6138364672660828
+      ]
+    },
+    {
+      "step": 17,
+      "envs": [
+        0
+      ],
+      "joint_speed": [
+        0.40238744020462036,
+        1.0456528663635254
+      ],
+      "port_speed": [
+        167225888.0,
+        1.0929114818572998
+      ]
+    },
+    {
+      "step": 46,
+      "envs": [
+        0
+      ],
+      "joint_speed": [
+        0.374827116727829,
+        0.9792203903198242
+      ],
+      "port_speed": [
+        286659904.0,
+        0.9024614691734314
+      ]
+    },
+    {
+      "step": 53,
+      "envs": [
+        0
+      ],
+      "joint_speed": [
+        0.5038813948631287,
+        0.4573313891887665
+      ],
+      "port_speed": [
+        19839936.0,
+        0.9008100032806396
+      ]
+    },
+    {
+      "step": 89,
+      "envs": [
+        0
+      ],
+      "joint_speed": [
+        0.8900730013847351,
+        0.18930479884147644
+      ],
+      "port_speed": [
+        1944247.5,
+        1.1591404676437378
+      ]
+    },
+    {
+      "step": 101,
+      "envs": [
+        0
+      ],
+      "joint_speed": [
+        0.47497156262397766,
+        0.5037729144096375
+      ],
+      "port_speed": [
+        47868.7421875,
+        0.9210419058799744
+      ]
+    }
+  ],
+  "wall_time_s": 86.31
+}
