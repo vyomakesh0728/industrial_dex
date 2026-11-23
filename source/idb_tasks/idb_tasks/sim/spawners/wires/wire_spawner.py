@@ -100,7 +100,7 @@ def build_articulated_wire_usd(
     seg_len = length / num_segments
     overlap = (2.0 * radius) if capsule_overlap is None else float(capsule_overlap)
     capsule_height = max(seg_len + overlap - 2.0 * radius, 0.001)
-    seg_mass = max(density * math.pi * radius * radius * seg_len, 1.0e-4)
+    seg_mass = max(density * math.pi * radius * radius * seg_len, 5.0e-4)
 
     seg_paths: list[str] = []
     for i in range(num_segments):
@@ -116,6 +116,15 @@ def build_articulated_wire_usd(
         UsdPhysics.RigidBodyAPI.Apply(cap.GetPrim())
         UsdPhysics.CollisionAPI.Apply(cap.GetPrim())
         UsdPhysics.MassAPI.Apply(cap.GetPrim()).CreateMassAttr().Set(float(seg_mass))
+        if HAS_PHYSX_SCHEMA:
+            from pxr import PhysxSchema  # type: ignore[import-not-found]
+
+            rb = PhysxSchema.PhysxRigidBodyAPI.Apply(cap.GetPrim())
+            rb.CreateLinearDampingAttr().Set(1.5)
+            rb.CreateAngularDampingAttr().Set(2.0)
+            rb.CreateMaxDepenetrationVelocityAttr().Set(1.0)
+            rb.CreateMaxLinearVelocityAttr().Set(3.0)
+            rb.CreateMaxAngularVelocityAttr().Set(25.0)
         if i > 0:
             _apply_d6_bending_joint(
                 stage,
@@ -157,7 +166,9 @@ def build_articulated_wire_usd(
     j_start.CreateLocalRot0Attr().Set(Gf.Quatf(0.0, 0.0, 0.0, 1.0))
     j_start.CreateLocalPos1Attr().Set(Gf.Vec3f(start_anchor, 0.0, 0.0))
     j_start.CreateLocalRot1Attr().Set(Gf.Quatf(1.0))
-    UsdPhysics.FilteredPairsAPI.Apply(start_prim).CreateFilteredPairsRel().SetTargets([Sdf.Path(seg_paths[0])])
+    UsdPhysics.FilteredPairsAPI.Apply(start_prim).CreateFilteredPairsRel().SetTargets(
+        [Sdf.Path(p) for p in seg_paths[: min(2, len(seg_paths))]]
+    )
 
     # End port at X=length pointing along +X (identity orientation).
     # p_world = root + anchor_x = length -> root = length - anchor_x (> length since anchor_x < 0).
@@ -183,7 +194,9 @@ def build_articulated_wire_usd(
     j_end.CreateLocalRot0Attr().Set(Gf.Quatf(1.0))
     j_end.CreateLocalPos1Attr().Set(Gf.Vec3f(end_anchor, 0.0, 0.0))
     j_end.CreateLocalRot1Attr().Set(Gf.Quatf(1.0))
-    UsdPhysics.FilteredPairsAPI.Apply(end_prim).CreateFilteredPairsRel().SetTargets([Sdf.Path(seg_paths[-1])])
+    UsdPhysics.FilteredPairsAPI.Apply(end_prim).CreateFilteredPairsRel().SetTargets(
+        [Sdf.Path(p) for p in seg_paths[max(0, len(seg_paths) - 2) :]]
+    )
 
     if HAS_PHYSX_SCHEMA:
         from pxr import PhysxSchema  # type: ignore[import-not-found]

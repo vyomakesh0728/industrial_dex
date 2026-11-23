@@ -6,9 +6,9 @@ This repository ships simulation environments, CAD-derived OpenUSD assets, physi
 
 ## Live Isaac Sim previews
 
-Verified live on an NVIDIA GeForce RTX 3090 (`nvcr.io/nvidia/isaac-lab:2.2.0`, 20/20 environments passed with zero faults in [verification/matrix_report.md](verification/matrix_report.md)). Four additional rollout GIFs, 512x512 MP4 recordings, Table I sensor configs 1 through 6 results, and PhysX sensor logs live in [verification/](verification/README.md).
+Verified live in NVIDIA `nvcr.io/nvidia/isaac-lab:2.2.0` (Isaac Sim 5.0 + Isaac Lab 2.2.0): all 20/20 environments passed with zero faults on an RTX 3090 ([verification/matrix_report.md](verification/matrix_report.md)), and all six continuous 6-second 1x real-time previews (`60 fps` source MP4 at `render_stride=1`, exact-1x `25 fps` GIF, `--driver sweep --no-mid-resets`, zero faults) were captured on an RTX 4090. Four additional rollout GIFs, all 512x512 60 fps MP4 recordings, Table I sensor configs 1 through 6 logs, and PhysX sensor verification live in [verification/](verification/README.md).
 
-| Franka Panda/FR3 + Articulated Cable (`SCFiberMaintenance`, `medium`, Sensor Config 1) | UR5 + Robotiq 2F-85 + CUDA FEM Deformable Cable (`SCPortSwap`, `medium`, Sensor Config 4) |
+| Franka Panda/FR3 + Articulated Cable (`SCFiberMaintenance`, `medium`, 1x real-time) | UR5 + Robotiq 2F-85 + CUDA FEM Deformable Cable (`SCPortSwap`, `medium`, 1x real-time) |
 | --- | --- |
 | ![Franka Articulation SC Fiber Maintenance](verification/gifs/franka_art_sc_maintenance_medium.gif) | ![UR5 Deformable SC Port Swap](verification/gifs/ur5_fem_sc_swap_medium.gif) |
 
@@ -111,7 +111,6 @@ uv run python scripts/idb/export_assets.py --fetch
 - [Task 3: LC duplex fiber cable port swap](docs/tasks/task3_lc_duplex_port_swap.md)
 - [Task 4: SC simplex fiber cable maintenance](docs/tasks/task4_sc_fiber_maintenance.md)
 - [Task 5: LC duplex fiber cable maintenance](docs/tasks/task5_lc_duplex_fiber_maintenance.md)
-- [Decision trail](decisions.tsv)
 - [Live GPU verification report and rollout gallery](verification/README.md)
 
 ## References

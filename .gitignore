@@ -1,5 +1,6 @@
 .env
 .venv/
+decisions.tsv
 __pycache__/
 *.py[cod]
 *.egg-info/

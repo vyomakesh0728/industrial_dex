@@ -51,7 +51,12 @@ def build_parser(with_app_launcher: bool = False) -> argparse.ArgumentParser:
     parser.add_argument("--wire", default="articulation", choices=("articulation", "deformable"))
     parser.add_argument("--variation", default="sparse", choices=("sparse", "medium", "dense", "randomized"))
     parser.add_argument("--mode", default="demo", choices=("demo", "random", "eval"))
-    parser.add_argument("--driver", default="random", choices=("zero", "random", "idle"))
+    parser.add_argument("--driver", default="random", choices=("zero", "random", "idle", "sweep"))
+    parser.add_argument(
+        "--no-mid-resets",
+        action="store_true",
+        help="Disable diagnostic mid-rollout partial/full resets for continuous video capture.",
+    )
     parser.add_argument(
         "--sensor-config",
         type=int,
@@ -165,7 +170,7 @@ def _compose_from_cli(task_id: str, args_cli: argparse.Namespace, extra_tokens: 
             existing_cams.append("side")
         explicit["env.sensors.cameras"] = existing_cams
         explicit.setdefault("env.sensors.camera_resolution", 512)
-        explicit.setdefault("env.sensors.render_stride", 4)
+        explicit.setdefault("env.sensors.render_stride", 1)
     rt["apply_cli"](cfg, explicit, rt["legacy_overrides"](args_cli, ORIGINAL_ARGV))
     return rt["resolve_env_cfg"](cfg)
 
@@ -182,7 +187,38 @@ def _check_tensors(env, obs: dict, reward, action, report: dict, torch_mod) -> N
         report["nonfinite"].append("wire")
 
 
-def _run_simulation(env, driver: str, steps_override: int, report: dict, torch_mod, video_writer=None) -> None:
+def _sweep_action(step: int, total_steps: int, dt: float, num_envs: int, action_dim: int, device, torch_mod):
+    """Pure open-loop sinusoidal excitation (reads zero observations) for smooth 1x visual inspection."""
+    import math
+
+    t = step * dt
+    t_total = max(total_steps * dt, 1e-3)
+    t1 = 0.30 * t_total
+    t2 = 0.70 * t_total
+    action = torch_mod.zeros(num_envs, action_dim, device=device)
+    if t < t1:
+        dz = -0.95 * math.sin(math.pi * t / t1)
+    elif t < t2:
+        phase = (t - t1) / max(t2 - t1, 1e-3)
+        dz = 0.75 * math.sin(4.0 * math.pi * phase)
+    else:
+        dz = 0.90 * math.sin(math.pi * (t - t2) / max(t_total - t2, 1e-3))
+    dx = 0.85 * math.sin(4.0 * math.pi * t / t_total)
+    dy = 0.95 * math.sin(2.0 * math.pi * t / t_total)
+    dry = 0.70 * math.sin(2.0 * math.pi * t / t_total)
+    action[:, 0] = dx
+    action[:, 1] = dy
+    action[:, 2] = dz
+    if action_dim >= 7:
+        action[:, 4] = dry
+    # Slow open-loop gripper open/close cycle so finger actuation is clearly visible.
+    action[:, -1] = 1.0 if math.sin(2.0 * math.pi * t / 2.0) > 0.0 else -1.0
+    return action
+
+
+def _run_simulation(
+    env, driver: str, steps_override: int, report: dict, torch_mod, video_writer=None, mid_resets: bool = True
+) -> None:
     steps = steps_override or int(env.max_episode_length)
     obs, _ = env.reset()
     motion = 0.0
@@ -190,6 +226,8 @@ def _run_simulation(env, driver: str, steps_override: int, report: dict, torch_m
     for step in range(steps):
         if driver == "random":
             action = 2.0 * torch_mod.rand(env.num_envs, env.cfg.action_space, device=env.device) - 1.0
+        elif driver == "sweep":
+            action = _sweep_action(step, steps, float(env.step_dt), env.num_envs, env.cfg.action_space, env.device, torch_mod)
         else:
             action = torch_mod.zeros(env.num_envs, env.cfg.action_space, device=env.device)
         obs, reward, terminated, truncated, extras = env.step(action)
@@ -206,7 +244,7 @@ def _run_simulation(env, driver: str, steps_override: int, report: dict, torch_m
         if video_writer is not None and step % env.cfg.sensors.render_stride == 0:
             frame = env.tiled_cameras["side"].data.output["rgb"][0, ..., :3].to(torch_mod.uint8).cpu().numpy()
             video_writer.append_data(frame)
-        if step == steps // 3 and env.num_envs > 1:
+        if mid_resets and step == steps // 3 and env.num_envs > 1:
             before = env.episode_length_buf[1:].clone()
             env._reset_idx(torch_mod.tensor([0], device=env.device))
             env.scene.write_data_to_sim()
@@ -214,11 +252,11 @@ def _run_simulation(env, driver: str, steps_override: int, report: dict, torch_m
             report["partial_resets"] += 1
             if not torch_mod.equal(before, env.episode_length_buf[1:]):
                 report["errors"].append("partial reset modified another env")
-        if step == (2 * steps) // 3:
+        if mid_resets and step == (2 * steps) // 3:
             obs, _ = env.reset()
             report["full_resets"] += 1
     report["joint_motion"] = round(motion, 5)
-    motion_ok = (motion > 1e-3) if driver == "random" else True
+    motion_ok = (motion > 1e-3) if driver in ("random", "sweep") else True
     report["passed"] = not report["nonfinite"] and not report["errors"] and motion_ok
 
 
@@ -302,6 +340,7 @@ def main() -> int:
     }
     start_t = time.time()
     writer = None
+    env = None
     try:
         env = rt["gym"].make(task_id, cfg=env_cfg).unwrapped
         if args_cli.video:
@@ -309,24 +348,34 @@ def main() -> int:
 
             fps = 1.0 / (env.step_dt * env.cfg.sensors.render_stride)
             writer = imageio.get_writer(os.path.join(output_dir, "rollout.mp4"), fps=fps, macro_block_size=1)
-        _run_simulation(env, args_cli.driver, args_cli.steps, report, rt["torch"], video_writer=writer)
+        _run_simulation(
+            env,
+            args_cli.driver,
+            args_cli.steps,
+            report,
+            rt["torch"],
+            video_writer=writer,
+            mid_resets=not args_cli.no_mid_resets,
+        )
         report["faults"] = env.fault_count
         report["fault_log"] = env.fault_log[:20]
-        env.close()
     except Exception:
         report["errors"].append(traceback.format_exc()[-2000:])
     finally:
         if writer is not None:
             writer.close()
+            writer = None
         report["wall_time_s"] = round(time.time() - start_t, 2)
         with open(os.path.join(output_dir, "result.json"), "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, default=str)
     print(f"[idb] {task_id} ({args_cli.driver}): passed={report['passed']} errors={report['errors'][:1]}")
     exit_code = 0 if report["passed"] else 1
-    if exit_code:
+    if exit_code or args_cli.headless:
         sys.stdout.flush()
         sys.stderr.flush()
         os._exit(exit_code)
+    if env is not None:
+        env.close()
     simulation_app.close()
     return 0
 

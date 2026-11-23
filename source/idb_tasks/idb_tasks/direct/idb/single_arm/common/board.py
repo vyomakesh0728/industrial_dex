@@ -82,6 +82,11 @@ class IDBBoardRuntime:
         for idx, (far_p, act_p, preset_name) in enumerate(self.env.cfg.resolved_neighbor_cables):
             w_cfg = WireSceneCfg(kind=self.env.cfg.wire.kind)
             w_cfg.apply_preset_defaults(preset_name)
+            # Horizontal Panel C jumpers span ~52 mm; use a short realistic patch cord so arches clear Panel B and the frame.
+            if far_p.startswith("C") and act_p.startswith("C"):
+                w_cfg.length = 0.18
+                w_cfg.num_segments = 16
+                w_cfg.lateral_bow = (0.0, -0.015)
             c_cfg = ConnectorCfg(
                 family=self.spec.port(act_p).family,
                 far_family=self.spec.port(far_p).family,
@@ -97,10 +102,7 @@ class IDBBoardRuntime:
                 tip_length=geom.tip_length,
                 name=f"neighbor_wire_{idx}",
             )
-            # Separate interleaved horizontal Panel C pairs vertically so their 3D arches never collide.
-            if far_p.startswith("C") and act_p.startswith("C"):
-                col = int(far_p[1:])
-                backend.cfg = w_cfg.replace(lateral_bow=(0.0, -0.045 if (col % 2 == 1) else 0.025))
+            backend.cfg = w_cfg
             backend.spawn()
             backend.pin_far_end()
             self.neighbor_wires.append((far_p, act_p, backend))

@@ -48,10 +48,10 @@ POPULATION_CATALOG: tuple[tuple[str, str, str], ...] = (
     ("B7", "A7", "os2_fiber_simplex"),
     ("B9", "A9", "os2_fiber_duplex"),
     ("B11", "A11", "os2_fiber_duplex"),
-    ("C1", "C3", "cat6_ethernet"),
-    ("C2", "C4", "cat6_ethernet"),
-    ("C9", "C11", "os2_fiber_duplex"),
-    ("C10", "C12", "os2_fiber_duplex"),
+    ("C1", "C4", "cat6_ethernet"),
+    ("C9", "C12", "os2_fiber_duplex"),
+    ("C2", "C3", "cat6_ethernet"),
+    ("C10", "C11", "os2_fiber_duplex"),
 )
 
 
@@ -137,7 +137,7 @@ class VariationCfg:
     """Configurable scene variations: board density, pose jitter, physics, lighting, port selection."""
 
     population_density: str = "sparse"
-    """Board cable population: ``sparse`` (0 neighbors, paper baseline), ``medium`` (up to 6), ``dense`` (up to 14), or ``custom``."""
+    """Board cable population: ``sparse`` (0 neighbors, paper baseline), ``medium`` (up to 6), ``dense`` (up to 12), or ``custom``."""
     neighbor_cables: list[list[str]] = []
     """Explicit neighbor cables when population_density == 'custom': [[far_port, active_port, preset], ...]."""
     randomize_board_pose: bool = False
@@ -281,7 +281,7 @@ def _select_neighbor_cables(cfg: SingleArmIDBEnvCfg, reserved_ports: set[str]) -
     if density == "custom":
         chosen = [(str(a), str(b), str(p)) for a, b, p in cfg.variation.neighbor_cables]
     else:
-        limit = 6 if density == "medium" else 14
+        limit = 6 if density == "medium" else 12
         chosen = []
         used = set(reserved_ports)
         for far_p, act_p, preset in POPULATION_CATALOG:

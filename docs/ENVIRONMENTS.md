@@ -103,7 +103,7 @@ Every run writes the final resolved config to `<output>/params/env.yaml` and lay
 | --- | --- | --- | --- | --- | --- | --- |
 | `sparse` | 0 (paper baseline) | Off | Off | Off | Off | Off |
 | `medium` | 6 disjoint cables | On | Off | Off | Off | Off |
-| `dense` | 13 to 14 disjoint cables | On | On (`±20 mm X, ±40 mm Y, ±5° yaw`) | On | On | Off |
+| `dense` | 12 disjoint cables | On | On (`±20 mm X, ±40 mm Y, ±5° yaw`) | On | On | Off |
 | `randomized` | 6 disjoint cables | On | On | On | On | On |
 
 Custom neighbor layouts are supported by setting `env.variation.population_density=custom` and providing `env.variation.neighbor_cables=[[far,active,preset],...]`. Cable physics jitter (`randomize_cable_physics`) scales joint bending stiffness and material friction per reset on `ArticulationWire`; PhysX FEM material parameters on `DeformableWire` are configured at spawn time. Lighting jitter randomizes `/World/Light` dome intensity on reset.
