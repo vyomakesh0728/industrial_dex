@@ -1,0 +1,13 @@
+task:
+  far_port: B9
+  source_port: A9
+  target_port: A9
+  polishing_required_cycles: 10
+  polishing_pressure_min_n: 1.0
+  polishing_pressure_max_n: 2.0
+sensors:
+  enable_wrist_ft: true
+  enable_polishing_contact_sensor: true
+episode_length_s: 45.0
+action_scale: 0.01
+fix_ee_orient: false

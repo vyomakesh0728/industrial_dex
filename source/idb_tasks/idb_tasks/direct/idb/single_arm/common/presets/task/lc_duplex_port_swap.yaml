@@ -1,0 +1,7 @@
+task:
+  far_port: B9
+  source_port: A9
+  target_port: A10
+episode_length_s: 30.0
+action_scale: 0.01
+fix_ee_orient: false

@@ -32,26 +32,25 @@ PAPER_SENSOR_CONFIGS: dict[int, dict[str, Any]] = {
     6: {"cameras": ["wrist_d405_rgb"], "enable_wrist_ft": False},
 }
 
-# Standard background cable topologies for IDB Board #1 difficulty modulation (Section III-A).
-# Each entry is (far_port_id, active_port_id, cable_preset).
+# Standard disjoint front-panel background cable topologies for IDB Board #1 difficulty modulation.
+# All 16 pairs partition the 32 front ports without sharing any single receptacle.
 POPULATION_CATALOG: tuple[tuple[str, str, str], ...] = (
+    ("B1", "A1", "cat6_ethernet"),
     ("B2", "A2", "cat6_ethernet"),
     ("B3", "A3", "cat6_ethernet"),
     ("B4", "A4", "cat6_ethernet"),
-    ("C1", "B1", "cat6_ethernet"),
-    ("C2", "B2", "cat6_ethernet"),
-    ("C3", "B3", "cat6_ethernet"),
-    ("C4", "B4", "cat6_ethernet"),
+    ("C1", "C2", "cat6_ethernet"),
+    ("C3", "C4", "cat6_ethernet"),
+    ("B5", "A5", "os2_fiber_simplex"),
     ("B6", "A6", "os2_fiber_simplex"),
     ("B7", "A7", "os2_fiber_simplex"),
     ("B8", "A8", "os2_fiber_simplex"),
+    ("B9", "A9", "os2_fiber_duplex"),
     ("B10", "A10", "os2_fiber_duplex"),
     ("B11", "A11", "os2_fiber_duplex"),
     ("B12", "A12", "os2_fiber_duplex"),
-    ("C9", "B9", "os2_fiber_duplex"),
-    ("C10", "B10", "os2_fiber_duplex"),
-    ("C11", "B11", "os2_fiber_duplex"),
-    ("C12", "B12", "os2_fiber_duplex"),
+    ("C9", "C10", "os2_fiber_duplex"),
+    ("C11", "C12", "os2_fiber_duplex"),
 )
 
 
@@ -365,7 +364,7 @@ def resolve_env_cfg(cfg: SingleArmIDBEnvCfg) -> SingleArmIDBEnvCfg:
         include_cable_clips=cfg.board.include_cable_clips,
         activate_polishing_contact_sensor=cfg.sensors.enable_polishing_contact_sensor,
     )
-    reserved_ports = cfg.task.reserved_ports()
+    reserved_ports = cfg.task.reserved_ports(include_candidates=cfg.variation.randomize_target_port)
     cfg.resolved_neighbor_cables = _select_neighbor_cables(cfg, reserved_ports)
     cfg.observation_space = cfg.task.observation_dim(arm_dof + 1)
 

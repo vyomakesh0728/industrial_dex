@@ -94,14 +94,16 @@ class PluggedCableArc:
         b2 = 3.0 * (1.0 - t) * (t**2)
         b3 = t**3
 
-        # Compute unit span axis between the two ports and an orthogonal lateral axis in the panel plane.
+        # Project span into the plane orthogonal to exit_dir so spread never fights forward exit bow.
         span = active_cable_end - far_cable_start
-        span_len = span.norm(dim=-1, keepdim=True).clamp_min(1e-6)
-        span_dir = span / span_len
+        span_perp = span - (span * exit_dir).sum(dim=-1, keepdim=True) * exit_dir
+        span_norm = span_perp.norm(dim=-1, keepdim=True)
+        fallback_z = torch.tensor([[0.0, 0.0, 1.0]], device=device, dtype=dtype).expand(n, 3)
+        span_dir = torch.where(span_norm > 1e-4, span_perp / span_norm.clamp_min(1e-6), fallback_z)
         side_dir = torch.cross(exit_dir, span_dir, dim=-1)
         side_norm = side_dir.norm(dim=-1, keepdim=True)
-        fallback = torch.tensor([[0.0, 1.0, 0.0]], device=device, dtype=dtype).expand(n, 3)
-        side_dir = torch.where(side_norm > 1e-4, side_dir / side_norm.clamp_min(1e-6), fallback)
+        fallback_y = torch.tensor([[0.0, 1.0, 0.0]], device=device, dtype=dtype).expand(n, 3)
+        side_dir = torch.where(side_norm > 1e-4, side_dir / side_norm.clamp_min(1e-6), fallback_y)
 
         # Spread control points outward into a smooth elastica-like loop matching real datacenter patch cords
         # so the apex never forms a tight hairpin kink.
