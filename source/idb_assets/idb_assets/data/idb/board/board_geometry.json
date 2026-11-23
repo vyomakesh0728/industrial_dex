@@ -1,0 +1,1119 @@
+{
+  "version": "idb-board-1-v3.5",
+  "source_step": "datacenter-cable-manipulation/source/datacenter-benchmark-assembly-v3.5.step",
+  "coordinate_frame": "Z-up meters; X=0 at panel front face (+X into board), Y=0 horizontal center (+Y left), Z=0 base bottom",
+  "footprint_m": [
+    0.29,
+    0.25,
+    0.30645
+  ],
+  "panels": {
+    "C": {
+      "center": [
+        0.00575,
+        -0.0,
+        0.106425
+      ],
+      "size": [
+        0.0115,
+        0.25,
+        0.04445
+      ],
+      "usd_relpath": "board/panel_c.usda"
+    },
+    "A": {
+      "center": [
+        0.00575,
+        0.0,
+        0.239775
+      ],
+      "size": [
+        0.0115,
+        0.25,
+        0.04445
+      ],
+      "usd_relpath": "board/panel_a.usda"
+    },
+    "B": {
+      "center": [
+        0.00575,
+        0.0,
+        0.150875
+      ],
+      "size": [
+        0.0115,
+        0.25,
+        0.04445
+      ],
+      "usd_relpath": "board/panel_b.usda"
+    }
+  },
+  "polishing_pad": {
+    "center": [
+      -0.002,
+      0.0,
+      0.284146
+    ],
+    "normal": [
+      -1.0,
+      0.0,
+      0.0
+    ],
+    "radius": 0.016888,
+    "thickness": 0.002,
+    "bracket_origin": [
+      0.0,
+      0.0,
+      0.262
+    ]
+  },
+  "extrusions": [
+    {
+      "name": "extrusion_0",
+      "center": [
+        -0.115,
+        0.0,
+        0.01
+      ],
+      "size": [
+        0.02,
+        0.25,
+        0.02
+      ]
+    },
+    {
+      "name": "extrusion_1",
+      "center": [
+        0.02,
+        -0.115,
+        0.01
+      ],
+      "size": [
+        0.25,
+        0.02,
+        0.02
+      ]
+    },
+    {
+      "name": "extrusion_2",
+      "center": [
+        0.02,
+        -0.0,
+        0.28
+      ],
+      "size": [
+        0.02,
+        0.25,
+        0.02
+      ]
+    },
+    {
+      "name": "extrusion_3",
+      "center": [
+        0.02,
+        0.115,
+        0.145
+      ],
+      "size": [
+        0.02,
+        0.02,
+        0.25
+      ]
+    },
+    {
+      "name": "extrusion_4",
+      "center": [
+        0.02,
+        0.115,
+        0.01
+      ],
+      "size": [
+        0.25,
+        0.02,
+        0.02
+      ]
+    },
+    {
+      "name": "extrusion_5",
+      "center": [
+        0.155,
+        0.0,
+        0.01
+      ],
+      "size": [
+        0.02,
+        0.25,
+        0.02
+      ]
+    },
+    {
+      "name": "extrusion_6",
+      "center": [
+        0.02,
+        -0.115,
+        0.145
+      ],
+      "size": [
+        0.02,
+        0.02,
+        0.25
+      ]
+    }
+  ],
+  "ports": {
+    "A1": {
+      "panel": "A",
+      "column": 1,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.0951,
+        0.239885
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "A2": {
+      "panel": "A",
+      "column": 2,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.0776,
+        0.239885
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "A3": {
+      "panel": "A",
+      "column": 3,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.0601,
+        0.239885
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "A4": {
+      "panel": "A",
+      "column": 4,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.0426,
+        0.239885
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "A5": {
+      "panel": "A",
+      "column": 5,
+      "family": "sc_simplex",
+      "mouth_pos": [
+        -0.0152,
+        0.024,
+        0.239775
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.0152,
+      "cad_envelope_m": [
+        0.0274,
+        0.00941,
+        0.0218
+      ]
+    },
+    "A6": {
+      "panel": "A",
+      "column": 6,
+      "family": "sc_simplex",
+      "mouth_pos": [
+        -0.0152,
+        0.007,
+        0.239775
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.0152,
+      "cad_envelope_m": [
+        0.0274,
+        0.00941,
+        0.0218
+      ]
+    },
+    "A7": {
+      "panel": "A",
+      "column": 7,
+      "family": "sc_simplex",
+      "mouth_pos": [
+        -0.0152,
+        -0.01,
+        0.239775
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.0152,
+      "cad_envelope_m": [
+        0.0274,
+        0.00941,
+        0.0218
+      ]
+    },
+    "A8": {
+      "panel": "A",
+      "column": 8,
+      "family": "sc_simplex",
+      "mouth_pos": [
+        -0.0152,
+        -0.027,
+        0.239775
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.0152,
+      "cad_envelope_m": [
+        0.0274,
+        0.00941,
+        0.0218
+      ]
+    },
+    "A9": {
+      "panel": "A",
+      "column": 9,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.044,
+        0.239775
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    },
+    "A10": {
+      "panel": "A",
+      "column": 10,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.061,
+        0.239775
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    },
+    "A11": {
+      "panel": "A",
+      "column": 11,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.078,
+        0.239775
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    },
+    "A12": {
+      "panel": "A",
+      "column": 12,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.095,
+        0.239775
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    },
+    "B1": {
+      "panel": "B",
+      "column": 1,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.0951,
+        0.150765
+      ],
+      "socket_quat": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "roll_rad": 3.14159265,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "B2": {
+      "panel": "B",
+      "column": 2,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.0776,
+        0.150765
+      ],
+      "socket_quat": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "roll_rad": 3.14159265,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "B3": {
+      "panel": "B",
+      "column": 3,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.0601,
+        0.150765
+      ],
+      "socket_quat": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "roll_rad": 3.14159265,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "B4": {
+      "panel": "B",
+      "column": 4,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.0426,
+        0.150765
+      ],
+      "socket_quat": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "roll_rad": 3.14159265,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "B5": {
+      "panel": "B",
+      "column": 5,
+      "family": "lc_simplex",
+      "mouth_pos": [
+        -0.0041,
+        0.02515,
+        0.15105
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0041,
+      "cad_envelope_m": [
+        0.0275,
+        0.007,
+        0.013
+      ]
+    },
+    "B6": {
+      "panel": "B",
+      "column": 6,
+      "family": "lc_simplex",
+      "mouth_pos": [
+        -0.0041,
+        0.00815,
+        0.15105
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0041,
+      "cad_envelope_m": [
+        0.0275,
+        0.007,
+        0.013
+      ]
+    },
+    "B7": {
+      "panel": "B",
+      "column": 7,
+      "family": "lc_simplex",
+      "mouth_pos": [
+        -0.0041,
+        -0.00885,
+        0.15105
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0041,
+      "cad_envelope_m": [
+        0.0275,
+        0.007,
+        0.013
+      ]
+    },
+    "B8": {
+      "panel": "B",
+      "column": 8,
+      "family": "lc_simplex",
+      "mouth_pos": [
+        -0.0041,
+        -0.02585,
+        0.15105
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0041,
+      "cad_envelope_m": [
+        0.0275,
+        0.007,
+        0.013
+      ]
+    },
+    "B9": {
+      "panel": "B",
+      "column": 9,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.044,
+        0.150875
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    },
+    "B10": {
+      "panel": "B",
+      "column": 10,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.061,
+        0.150875
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    },
+    "B11": {
+      "panel": "B",
+      "column": 11,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.078,
+        0.150875
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    },
+    "B12": {
+      "panel": "B",
+      "column": 12,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.095,
+        0.150875
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    },
+    "C1": {
+      "panel": "C",
+      "column": 1,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.094875,
+        0.106435
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "C2": {
+      "panel": "C",
+      "column": 2,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.077375,
+        0.106435
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "C3": {
+      "panel": "C",
+      "column": 3,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.059875,
+        0.106435
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "C4": {
+      "panel": "C",
+      "column": 4,
+      "family": "rj45",
+      "mouth_pos": [
+        -0.0,
+        0.042375,
+        0.106435
+      ],
+      "socket_quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "roll_rad": 0.0,
+      "protrusion_m": 0.0,
+      "cad_envelope_m": [
+        0.03376,
+        0.017,
+        0.0177
+      ]
+    },
+    "C9": {
+      "panel": "C",
+      "column": 9,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.044,
+        0.106425
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    },
+    "C10": {
+      "panel": "C",
+      "column": 10,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.061,
+        0.106425
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    },
+    "C11": {
+      "panel": "C",
+      "column": 11,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.078,
+        0.106425
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    },
+    "C12": {
+      "panel": "C",
+      "column": 12,
+      "family": "lc_duplex",
+      "mouth_pos": [
+        -0.01605,
+        -0.095,
+        0.106425
+      ],
+      "socket_quat": [
+        0.70710678,
+        -0.70710678,
+        0.0,
+        0.0
+      ],
+      "latch_dir": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "roll_rad": -1.57079633,
+      "protrusion_m": 0.01605,
+      "cad_envelope_m": [
+        0.0291,
+        0.0093,
+        0.0218
+      ]
+    }
+  },
+  "cable_clips": [
+    {
+      "name": "clip_left_upper",
+      "pos": [
+        0.005,
+        0.125,
+        0.2
+      ],
+      "quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "clip_left_lower",
+      "pos": [
+        0.005,
+        0.125,
+        0.175
+      ],
+      "quat": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "clip_right_upper",
+      "pos": [
+        0.005,
+        -0.125,
+        0.2
+      ],
+      "quat": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "clip_right_lower",
+      "pos": [
+        0.005,
+        -0.125,
+        0.175
+      ],
+      "quat": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ]
+}

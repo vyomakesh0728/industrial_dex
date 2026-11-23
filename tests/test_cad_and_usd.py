@@ -94,3 +94,31 @@ def test_all_usd_assets_load_cleanly_in_openusd():
             assert counts and len(counts) >= 4, f"{rel}:{prim.GetPath()} has insufficient faces"
             for pt in pts:
                 assert all(math.isfinite(c) for c in pt), f"Non-finite vertex in {rel}:{prim.GetPath()}"
+
+
+def test_load_board_spec_and_zero_socket_overlap():
+    from idb_assets.board_spec import load_board_spec
+    from idb_tasks.sim.spawners.ports.connector_profiles import get_connector_profile
+
+    spec = load_board_spec()
+    assert len(spec.ports) == 32
+    assert len(spec.panels) == 3
+    assert len(spec.extrusions) == 7
+    assert len(spec.cable_clips) == 4
+
+    # Compute each socket's horizontal (Y) interval in Board Local Frame and confirm zero overlap per panel.
+    for panel in ("A", "B", "C"):
+        panel_ports = spec.ports_by_panel(panel)
+        intervals = []
+        for port in panel_ports:
+            prof = get_connector_profile(port.family)
+            oy0, oy1, oz0, oz1 = prof.socket_outer_bounds
+            c_r, s_r = math.cos(port.roll_rad), math.sin(port.roll_rad)
+            # Rotate 4 corners of socket outer YZ rectangle by roll_rad around +X -> board Y.
+            ys = [port.mouth_pos[1] + (c_r * y - s_r * z) for y in (oy0, oy1) for z in (oz0, oz1)]
+            intervals.append((port.port_id, min(ys), max(ys)))
+        intervals.sort(key=lambda item: item[1])
+        for (id_a, _, hi_a), (id_b, lo_b, _) in zip(intervals, intervals[1:]):
+            gap_mm = (lo_b - hi_a) * 1000.0
+            assert gap_mm > 0.1, f"Adjacent sockets {id_a} and {id_b} overlap or touch: gap={gap_mm:.3f} mm"
+
