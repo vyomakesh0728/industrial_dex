@@ -1,0 +1,6 @@
+mode: eval
+enable_terminations: true
+terminate_on_time_out: true
+terminate_on_success: true
+terminate_on_damage: true
+episode_length_s: 60.0

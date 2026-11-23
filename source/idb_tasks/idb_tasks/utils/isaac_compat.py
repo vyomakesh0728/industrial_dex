@@ -37,14 +37,17 @@ else:
     def configclass(cls=None, **kwargs):  # type: ignore[misc]
         """Minimal configclass-compatible dataclass decorator for offline config testing."""
         def wrap(target):
-            # Convert mutable defaults (list/dict/dataclass instances) to default_factory copies.
-            from dataclasses import field as dc_field
+            # Mirror Isaac Lab's configclass: wrap mutable defaults AND MISSING via default_factory
+            # so MISSING fields can sit after defaulted fields and subclasses inherit cleanly.
+            from dataclasses import MISSING, field as dc_field
 
             annotations = getattr(target, "__annotations__", {})
             for name in list(annotations):
                 if hasattr(target, name):
                     val = getattr(target, name)
-                    if isinstance(val, (list, dict)) or (is_dataclass(val) and not isinstance(val, type)):
+                    if val is MISSING:
+                        setattr(target, name, dc_field(default_factory=lambda: MISSING))
+                    elif isinstance(val, (list, dict)) or (is_dataclass(val) and not isinstance(val, type)):
                         setattr(target, name, dc_field(default_factory=lambda v=val: copy.deepcopy(v)))
             dc = dataclass(target, **kwargs)
 

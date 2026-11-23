@@ -1,0 +1,4 @@
+connector:
+  family: rj45
+  far_family: rj45
+  port_mass: 0.012

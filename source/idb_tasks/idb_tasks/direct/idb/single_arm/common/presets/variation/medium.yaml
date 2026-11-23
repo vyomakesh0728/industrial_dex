@@ -1,0 +1,7 @@
+variation:
+  population_density: medium
+  randomize_board_pose: false
+  randomize_cable_physics: false
+  randomize_lighting: false
+board:
+  include_cable_clips: true

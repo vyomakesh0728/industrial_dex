@@ -1,0 +1,8 @@
+variation:
+  population_density: medium
+  randomize_board_pose: true
+  randomize_cable_physics: true
+  randomize_lighting: true
+  randomize_target_port: true
+board:
+  include_cable_clips: true

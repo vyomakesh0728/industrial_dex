@@ -1,0 +1,4 @@
+connector:
+  family: sc_simplex
+  far_family: lc_simplex
+  port_mass: 0.009

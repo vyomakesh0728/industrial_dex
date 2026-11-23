@@ -1,0 +1,6 @@
+mode: demo
+enable_terminations: false
+terminate_on_time_out: true
+terminate_on_success: false
+terminate_on_damage: false
+episode_length_s: 45.0

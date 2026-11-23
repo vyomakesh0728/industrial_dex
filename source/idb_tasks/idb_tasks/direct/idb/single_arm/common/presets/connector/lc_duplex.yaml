@@ -1,0 +1,4 @@
+connector:
+  family: lc_duplex
+  far_family: lc_duplex
+  port_mass: 0.008
